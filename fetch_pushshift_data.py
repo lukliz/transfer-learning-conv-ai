@@ -207,7 +207,7 @@ def comment_praw2psaw(comment_praw):
 
 
 for subreddit in tqdm(args.subreddit, unit="subreddit"):
-    submissions = api.search_submissions(subreddit=subreddit, num_comments=">10", max_items_returned=args.number_of_threads)
+    submissions = api.search_submissions(subreddit=subreddit, num_comments=">10", max_results_per_request=args.number_of_threads)
     out_dir = data_dir.joinpath(subreddit)
     os.makedirs(out_dir, exist_ok=True)
     for submission in tqdm(
