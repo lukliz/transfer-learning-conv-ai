@@ -12,17 +12,16 @@ from pathlib import Path
 
 logger = logging.getLogger(__file__)
 
+
 def format_thing(thing, submission_id):
     if thing["type"] == "submission":
-        return ( "\n".join([thing["url"], thing["title"], thing["author"], thing.get("selftext", "")])
+        return "\n".join(
+            [thing["url"], thing["title"], thing["author"], thing.get("selftext", "")]
         )
     elif thing["parent_id"] == submission_id:
-        return (thing["author"] + '\n' + thing["body"] )
+        return thing["author"] + "\n" + thing["body"]
     else:
-        return (
-            thing["author"] + '\n' + 
-            thing["body"]
-        )
+        return thing["author"] + "\n" + thing["body"]
 
 
 def get_id_for_comments(thing):
@@ -82,25 +81,26 @@ def get_dataset(tokenizer, data_path):
     splits = dict(train={}, valid={}, test={})
     for subreddit_path in subreddit_paths:
         subreddit_files = sorted(subreddit_path.glob("*.pickle"))
-        subreddit = subreddit_path.name
+        if subreddit_files:
+            subreddit = subreddit_path.name
 
-        # split
-        train_files, test_files = train_test_split(
-            subreddit_files, test_size=0.1, random_state=42
-        )
-        train_files, valid_files = train_test_split(
-            train_files, test_size=0.1, random_state=42
-        )
+            # split
+            train_files, test_files = train_test_split(
+                subreddit_files, test_size=0.1, random_state=42
+            )
+            train_files, valid_files = train_test_split(
+                train_files, test_size=0.1, random_state=42
+            )
 
-        splits["train"][subreddit] = train_files
-        splits["valid"][subreddit] = valid_files
-        splits["test"][subreddit] = test_files
+            splits["train"][subreddit] = train_files
+            splits["valid"][subreddit] = valid_files
+            splits["test"][subreddit] = test_files
 
     # collect data into the same dict format as hugging face
     dataset2 = collections.defaultdict(list)
     for split, personalities in splits.items():
         total = len(list(itertools.chain(*personalities.values())))
-        with tqdm(total=total, desc=f'{split}', unit='file') as prog:
+        with tqdm(total=total, desc=f"{split}", unit="file") as prog:
             for personality, files in personalities.items():
                 utterances = []
                 for file in files:
@@ -108,14 +108,16 @@ def get_dataset(tokenizer, data_path):
                     thread = pickle.load(file.open("rb"))
                     prog.update(1)
                     try:
-                        nodes_by_id, thing_by_id = thread2tree(thread["comment_dict"], thread["submission"])
+                        nodes_by_id, thing_by_id = thread2tree(
+                            thread["comment_dict"], thread["submission"]
+                        )
                     except Exception as e:
                         logger.warn("Exception for file '%s', '%s'", file, e)
                         continue
-                    
+
                     # get utterances
                     min_candidates = 3
-                    submission_id = get_id_for_comments(thread['submission'])
+                    submission_id = get_id_for_comments(thread["submission"])
                     for current_node in nodes_by_id.values():
                         if (
                             current_node.parent
@@ -128,9 +130,30 @@ def get_dataset(tokenizer, data_path):
                             ]
 
                             candidates = [
-                                format_thing(thing_by_id[node.name], submission_id)
-                                for node in current_node.children
+                                thing_by_id[node.name] for node in current_node.children
                             ]
+
+                            # Filter some of the bad data out
+                            candidates = filter(
+                                lambda x: x.get("author", "") != "AutoModerator",
+                                candidates,
+                            )
+                            candidates = filter(
+                                lambda x: x.get("author", "") != "[removed]", candidates
+                            )
+                            candidates = filter(
+                                lambda x: x.get("text", "") != "[deleted]", candidates
+                            )
+                            candidates = filter(
+                                lambda x: x.get("stickied", False) != True, candidates
+                            )
+                            candidates = [
+                                format_thing(thing, submission_id)
+                                for thing in candidates
+                            ]
+                            if len(candidates) < min_candidates:
+                                continue
+
                             # FIXME (wassname), this repo seems to be factored for a static number of candidates per personality so lets clip at 3
                             candidates = candidates[:min_candidates]
 
@@ -138,14 +161,16 @@ def get_dataset(tokenizer, data_path):
                             utterances.append(utterance)
                         else:
                             logger.debug("skipping node with too few paths")
-                dataset2[split].append(dict(personality=[personality], utterances=utterances))
+                dataset2[split].append(
+                    dict(personality=[personality], utterances=utterances)
+                )
 
     logger.info("Tokenize and encode the dataset")
 
     def tokenize(obj):
         if isinstance(obj, str):
             return tokenizer.convert_tokens_to_ids(
-                tokenizer.tokenize(obj)[:tokenizer.max_len]
+                tokenizer.tokenize(obj)[: tokenizer.max_len]
             )
         if isinstance(obj, dict):
             return dict((n, tokenize(o)) for n, o in obj.items())

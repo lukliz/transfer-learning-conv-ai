@@ -212,7 +212,7 @@ for subreddit in tqdm(args.subreddit, unit="subreddit"):
     print(subreddit)
 
     # Since the api often only returns 1000, lets query in monthly intervals
-    dates = pd.date_range('2017', '2019', freq='3M')
+    dates = pd.date_range('2018', '2019', freq='3M')
     date_bins = list(zip(dates[:-1], dates[1:]))
     random.shuffle(date_bins)
 
