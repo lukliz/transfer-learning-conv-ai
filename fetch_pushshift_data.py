@@ -207,7 +207,7 @@ def comment_praw2psaw(comment_praw):
 
 
 for subreddit in tqdm(args.subreddit, unit="subreddit"):
-    submissions = api.search_submissions(subreddit=subreddit, num_comments=">10")
+    submissions = api.search_submissions(subreddit=subreddit, num_comments=">10", max_items_returned=args.number_of_threads)
     out_dir = data_dir.joinpath(subreddit)
     os.makedirs(out_dir, exist_ok=True)
     for submission in tqdm(
@@ -215,9 +215,10 @@ for subreddit in tqdm(args.subreddit, unit="subreddit"):
     ):
         submission = psaw_to_dict(submission)
         if len(list(out_dir.glob("*.text"))) > args.number_of_threads:
+            print(f'stopping at {args.number_of_threads} threads')
             break
         submission_id = get_id_for_comments(submission)
-        out_file = out_dir.joinpath(submission_id + ".text")
+        out_file = out_dir.joinpath(submission_id + ".pickle")
 
         if not out_file.is_file():
             # Get comments
@@ -252,10 +253,10 @@ for subreddit in tqdm(args.subreddit, unit="subreddit"):
             logger.debug("writing pickle %s", out_pkl)
 
             # format
-            text = format_comments_dict(comment_dict, submission)
+            # text = format_comments_dict(comment_dict, submission)
 
-            # write out thread
-            out_file.write_text(text)
+            # # write out thread
+            # out_file.write_text(text)
         else:
             logger.info("skipping existing file %s", out_file)
 
