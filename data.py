@@ -113,13 +113,13 @@ def get_dataset(tokenizer, data_path):
                         continue
 
                     # get utterances
-                    min_candidates = 3
+                    min_candidates = 2
                     submission_id = get_id_for_comments(thread["submission"])
                     for current_node in nodes_by_id.values():
                         if (
                             current_node.parent
                             and len(current_node.path) > 1
-                            and len(current_node.children) >= min_candidates
+                            and len(current_node.children) >= 1 #min_candidates
                         ):
                             history = [
                                 format_thing(thing_by_id[node.name], submission_id)
@@ -139,7 +139,10 @@ def get_dataset(tokenizer, data_path):
                                 lambda x: x.get("author", "") != "[removed]", candidates
                             )
                             candidates = filter(
-                                lambda x: x.get("text", "") != "[deleted]", candidates
+                                lambda x: "[deleted]" not in x.get("text", ""), candidates
+                            )
+                            candidates = filter(
+                                lambda x: "[removed]" not in x.get("text", ""), candidates
                             )
                             candidates = filter(
                                 lambda x: x.get("stickied", False) != True, candidates
