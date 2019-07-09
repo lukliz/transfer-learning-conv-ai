@@ -127,7 +127,7 @@ def get_dataset(tokenizer, data_path):
                     try:
                         nodes_by_id, thing_by_id = thread2tree(thread["comment_dict"], thread["submission"])
                     except Exception as e:
-                        print(file, e)
+                        logger.warn("Exception for file %s, %s", file, e)
                         continue
                     
                     # get utterances
