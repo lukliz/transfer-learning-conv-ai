@@ -7,6 +7,7 @@ import random
 from argparse import ArgumentParser
 from itertools import chain
 from pprint import pformat
+from colored import fg, bg, attr
 
 import torch
 import torch.nn.functional as F
@@ -90,7 +91,7 @@ def run():
     parser.add_argument("--dataset_cache", type=str, default='./dataset_cache', help="Path or url of the dataset cache")
     parser.add_argument("--model", type=str, default="gpt2", help="Model type (gpt or gpt2)")
     parser.add_argument("--model_checkpoint", type=str, default="", help="Path, url or short name of the model")
-    parser.add_argument("--max_history", type=int, default=2, help="Number of previous utterances to keep in history")
+    parser.add_argument("--max_history", type=int, default=6, help="Number of previous utterances to keep in history")
     parser.add_argument("--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu", help="Device (cuda or cpu)")
 
     parser.add_argument("--no_sample", action='store_true', help="Set to use greedy decoding instead of sampling")
@@ -129,17 +130,18 @@ def run():
 
     history = []
     while True:
+        person2_name = 'HumanUser'
         raw_text = input(">>> ")
         while not raw_text:
             print('Prompt should not be empty!')
-            raw_text = input(">>> ")
+            raw_text = person2_name +'\n' + input(f"{fg(1)}>>> ")
         history.append(tokenizer.encode(raw_text))
         with torch.no_grad():
             out_ids = sample_sequence(personality, history, tokenizer, model, args)
         history.append(out_ids)
         history = history[-(2*args.max_history+1):]
         out_text = tokenizer.decode(out_ids, skip_special_tokens=True)
-        print(out_text)
+        print(f'{fg(17)}{out_text}{attr(0)}')
 
 
 if __name__ == "__main__":
