@@ -46,5 +46,5 @@ INFO:train.py:Train dataset (Batch, Candidates, Seq length): torch.Size([8, 2, 2
 INFO:train.py:Valid dataset (Batch, Candidates, Seq length): torch.Size([2, 3, 199])
 
 `python train.py --dataset_path ./data/reddit_threads --fp16 O1 --gradient_accumulation_steps 16 --train_batch_size 2 --valid_batch_size 2 --n_epochs 10`
-`python train.py --dataset_path ./data/reddit_threads --fp16 O1 --gradient_accumulation_steps 32 --train_batch_size 1 --valid_batch_size 1 --n_epochs 10`
+`python train.py --dataset_path ./data/reddit_threads --fp16 O2 --gradient_accumulation_steps 32 --train_batch_size 1 --valid_batch_size 1 --n_epochs 10`
 

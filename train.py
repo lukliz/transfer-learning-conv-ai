@@ -7,6 +7,7 @@ from pprint import pformat
 from argparse import ArgumentParser
 from collections import defaultdict
 from itertools import chain
+import coloredlogs
 
 import torch
 from torch.nn.parallel import DistributedDataParallel
@@ -162,6 +163,7 @@ def train():
     logging.basicConfig(level=logging.INFO if args.local_rank in [-1, 0] else logging.WARN)
     logger.warning("Running process %d", args.local_rank)  # This is a logger.warning: it will be printed by all distributed processes
     logger.info("Arguments: %s", pformat(args))
+    coloredlogs.install()
 
     # Initialize distributed training if needed
     args.distributed = (args.local_rank != -1)
