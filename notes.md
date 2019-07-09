@@ -27,10 +27,11 @@ I thought about formatting it using special  chars etc, but I decide it would be
     - [x]  TODO this is currently giving a max of 1000
     - [x]  fix data download limt
     - [x]  fix dataset size
-    - [ ]  fix the seq length, it seems that I need to concat when adding hist etc
-- [ ] change formatting
-  - [ ] remove the ids, we don't need it in this format
-- [ ] interact
+    - [x]  fix the seq length, it seems that I need to concat when adding hist etc
+- [x] change formatting
+  - [x] remove the ids, we don't need it in this format
+- [x] interact
+- [ ] remove [remove] and [deleted] as well as mod flaired messaged
 wishlist: save in json not pickle., append to jsonl, make the download script work better by getting a wekek at a time
 
 Look like I can't fit it into mem, need to use a cloud gpu!
@@ -48,3 +49,4 @@ INFO:train.py:Valid dataset (Batch, Candidates, Seq length): torch.Size([2, 3, 1
 `python train.py --dataset_path ./data/reddit_threads --fp16 O1 --gradient_accumulation_steps 16 --train_batch_size 2 --valid_batch_size 2 --n_epochs 10`
 `python train.py --dataset_path ./data/reddit_threads --fp16 O2 --gradient_accumulation_steps 32 --train_batch_size 1 --valid_batch_size 1 --n_epochs 10`
 
+`python interact.py --device cpu --dataset_path ./data/reddit_threads --model_checkpoint runs/Jul09_15-44-47_mjcdesktop/`

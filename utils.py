@@ -4,6 +4,7 @@
 import logging
 import tarfile
 import tempfile
+from pathlib import Path
 
 from pytorch_pretrained_bert import cached_path
 
@@ -23,62 +24,15 @@ def download_pretrained_model():
     return tempdir
 
 
-# def get_dataset(tokenizer, dataset_path, dataset_cache=None):
-#     """ Get PERSONACHAT from S3 """
-#     dataset_path = dataset_path or PERSONACHAT_URL
-#     dataset_cache = dataset_cache + '_' + type(tokenizer).__name__  # Do avoid using GPT cache for GPT-2 and vice-versa
-#     if dataset_cache and os.path.isfile(dataset_cache):
-#         logger.info("Load tokenized dataset from cache at %s", dataset_cache)
-#         dataset = torch.load(dataset_cache)
-#     else:
-#         logger.info("Download dataset from %s", dataset_path)
-#         personachat_file = cached_path(dataset_path)
-#         with open(personachat_file, "r", encoding="utf-8") as f:
-#             dataset = json.loads(f.read())
-
-#         logger.info("Tokenize and encode the dataset")
-#         def tokenize(obj):
-#             if isinstance(obj, str):
-#                 return tokenizer.convert_tokens_to_ids(tokenizer.tokenize(obj))
-#             if isinstance(obj, dict):
-#                 return dict((n, tokenize(o)) for n, o in obj.items())
-#             return list(tokenize(o) for o in obj)
-#         dataset = tokenize(dataset)
-#         if dataset_cache:
-#             torch.save(dataset, dataset_cache)
-#     return dataset
-
-# def get_dataset_personalities(tokenizer, dataset_path, dataset_cache=None):
-#     """ Get personalities from PERSONACHAT """
-#     dataset_path = dataset_path or PERSONACHAT_URL
-#     dataset_cache = dataset_cache + '_' + type(tokenizer).__name__  # Do avoid using GPT cache for GPT-2 and vice-versa
-#     if os.path.isfile(dataset_cache):
-#         logger.info("Load tokenized dataset from cache at %s", dataset_cache)
-#         personachat = torch.load(dataset_cache)
-#     else:
-#         logger.info("Download PERSONACHAT dataset from %s", dataset_path)
-#         personachat_file = cached_path(dataset_path)
-#         with open(personachat_file, "r", encoding="utf-8") as f:
-#             personachat = json.loads(f.read())
-
-#         logger.info("Tokenize and encode the dataset")
-#         def tokenize(obj):
-#             if isinstance(obj, str):
-#                 return tokenizer.convert_tokens_to_ids(tokenizer.tokenize(obj)[:tokenizer.max_len])
-#             if isinstance(obj, dict):
-#                 return dict((n, tokenize(o)) for n, o in obj.items())
-#             return list(tokenize(o) for o in obj)
-#         personachat = tokenize(personachat)
-#         torch.save(personachat, dataset_cache)
-
-#     logger.info("Filter personalities")
-#     personalities = []
-#     for dataset in personachat.values():
-#         for dialog in dataset:
-#             personalities.append(dialog["personality"])
-
-#     logger.info("Gathered {} personalities".format(len(personalities)))
-#     return personalities
+def get_dataset_personalities(tokenizer, dataset_path, dataset_cache=None):
+    """ Get personalities from PERSONACHAT """
+    data_dir = Path(dataset_path)
+    subreddit_paths = [d for d in data_dir.glob("*/") if d.is_dir()]
+    def tokenize(obj):
+        return tokenizer.convert_tokens_to_ids(
+                tokenizer.tokenize(obj)[:tokenizer.max_len])
+    personalities = [[tokenize(x.name)] for x in subreddit_paths]
+    return personalities
 
 class AttrDict(dict):
     def __init__(self, *args, **kwargs):
