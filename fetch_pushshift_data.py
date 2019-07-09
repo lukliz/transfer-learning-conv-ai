@@ -85,10 +85,12 @@ import copy
 import itertools
 import logging
 import os
+import random
 import pickle
 from pathlib import Path
 from psaw import PushshiftAPI
 from tqdm import tqdm
+import pandas as pd
 
 api = PushshiftAPI()
 
@@ -207,56 +209,64 @@ def comment_praw2psaw(comment_praw):
 
 
 for subreddit in tqdm(args.subreddit, unit="subreddit"):
-    submissions = api.search_submissions(subreddit=subreddit, num_comments=">10", max_results_per_request=args.number_of_threads)
-    out_dir = data_dir.joinpath(subreddit)
-    os.makedirs(out_dir, exist_ok=True)
-    for submission in tqdm(
-        submissions, desc=subreddit, unit="submission", total=args.number_of_threads
-    ):
-        submission = psaw_to_dict(submission)
+
+    # Since the api often only returns 1000, lets query in monthly intervals
+    dates = pd.date_range('2017', '2019', freq='3M')
+    date_bins = list(zip(dates[:-1], dates[1:]))
+    random.shuffle(date_bins)
+
+    for after, before in date_bins:
+        logger.debug('%s', dict(subreddit=subreddit, num_comments=">10", after=after, before=before, sort_type="num_comments"))
+        submissions = api.search_submissions(subreddit=subreddit, num_comments=">10", after=after, before=before, sort_type="num_comments")
+        out_dir = data_dir.joinpath(subreddit)
+        os.makedirs(out_dir, exist_ok=True)
         if len(list(out_dir.glob("*.text"))) > args.number_of_threads:
             print(f'stopping at {args.number_of_threads} threads')
             break
-        submission_id = get_id_for_comments(submission)
-        out_file = out_dir.joinpath(submission_id + ".pickle")
+        for submission in tqdm(
+            submissions, desc=subreddit, unit="submission", total=args.number_of_threads
+        ):
+            submission = psaw_to_dict(submission)
+            submission_id = get_id_for_comments(submission)
+            out_file = out_dir.joinpath(submission_id + ".pickle")
 
-        if not out_file.is_file():
-            # Get comments
-            submission_comment_ids = api._get_submission_comment_ids(submission["id"])
-            comment_dict = collections.defaultdict(list)
+            if not out_file.is_file():
+                # Get comments
+                submission_comment_ids = api._get_submission_comment_ids(submission["id"])
+                comment_dict = collections.defaultdict(list)
 
-            # Use eiehter psaw
-            comments = api.search_comments(ids=submission_comment_ids)
-            # It will just repeat unless we set a limit
-            comments = [
-                next(comments)
-                for _ in tqdm(
-                    range(submission["num_comments"]), leave=False, unit="comment"
+                # Use eiehter psaw
+                comments = api.search_comments(ids=submission_comment_ids)
+                # It will just repeat unless we set a limit
+                comments = [
+                    next(comments)
+                    for _ in tqdm(
+                        range(submission["num_comments"]), leave=False, unit="comment"
+                    )
+                ]
+                # Or praw... nah slow
+                #             comments = [comment_praw2psaw(reddit.comment(id).refresh()) for id in submission_comment_ids]
+                for comment in comments:
+                    comment = psaw_to_dict(comment)
+                    comment_dict[comment["parent_id"]].append(comment)
+
+                # sort by karma, if available
+                for key in comment_dict.keys():
+                    comment_dict[key].sort(key=lambda x: x.get("score", 0), reverse=True)
+
+                # pickle so we will have original data if wanted, that way we can make changes to input data formatting
+                out_pkl = out_dir.joinpath(submission_id + ".pickle")
+                pickle.dump(
+                    dict(submission=submission, comment_dict=comment_dict),
+                    out_pkl.open("wb"),
                 )
-            ]
-            # Or praw... nah slow
-            #             comments = [comment_praw2psaw(reddit.comment(id).refresh()) for id in submission_comment_ids]
-            for comment in comments:
-                comment = psaw_to_dict(comment)
-                comment_dict[comment["parent_id"]].append(comment)
+                logger.debug("writing pickle %s", out_pkl)
 
-            # sort by karma, if available
-            for key in comment_dict.keys():
-                comment_dict[key].sort(key=lambda x: x["score"], reverse=True)
+                # format
+                # text = format_comments_dict(comment_dict, submission)
 
-            # pickle so we will have original data if wanted, that way we can make changes to input data formatting
-            out_pkl = out_dir.joinpath(submission_id + ".pickle")
-            pickle.dump(
-                dict(submission=submission, comment_dict=comment_dict),
-                out_pkl.open("wb"),
-            )
-            logger.debug("writing pickle %s", out_pkl)
-
-            # format
-            # text = format_comments_dict(comment_dict, submission)
-
-            # # write out thread
-            # out_file.write_text(text)
-        else:
-            logger.info("skipping existing file %s", out_file)
+                # # write out thread
+                # out_file.write_text(text)
+            else:
+                logger.debug("skipping existing file %s", out_file)
 
