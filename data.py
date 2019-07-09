@@ -16,12 +16,9 @@ logger = logging.getLogger(__file__)
 def format_thing(thing, submission_id):
     if thing["type"] == "submission":
         return "\n".join(
-            [thing["url"], thing["title"], thing["author"], thing.get("selftext", "")]
+            [thing["title"], thing.get("selftext", "")]
         )
-    elif thing["parent_id"] == submission_id:
-        return thing["author"] + "\n" + thing["body"]
-    else:
-        return thing["author"] + "\n" + thing["body"]
+    return thing["body"]
 
 
 def get_id_for_comments(thing):
