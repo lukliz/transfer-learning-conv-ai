@@ -78,7 +78,7 @@ def get_dataset(tokenizer, data_path):
     splits = dict(train={}, valid={}, test={})
     for subreddit_path in subreddit_paths:
         subreddit_files = sorted(subreddit_path.glob("*.pickle"))
-        if subreddit_files:
+        if len(subreddit_files)>10:
             subreddit = subreddit_path.name
 
             # split
@@ -113,7 +113,8 @@ def get_dataset(tokenizer, data_path):
                         continue
 
                     # get utterances
-                    min_candidates = 2
+                    # Make a max number of candidates that will fit on your GPU
+                    max_candidates = 3
                     submission_id = get_id_for_comments(thread["submission"])
                     for current_node in nodes_by_id.values():
                         if (
@@ -139,10 +140,10 @@ def get_dataset(tokenizer, data_path):
                                 lambda x: x.get("author", "") != "[removed]", candidates
                             )
                             candidates = filter(
-                                lambda x: "[deleted]" not in x.get("text", ""), candidates
+                                lambda x: "[deleted]" not in x.get("body", ""), candidates
                             )
                             candidates = filter(
-                                lambda x: "[removed]" not in x.get("text", ""), candidates
+                                lambda x: "[removed]" not in x.get("body", ""), candidates
                             )
                             candidates = filter(
                                 lambda x: x.get("stickied", False) != True, candidates
@@ -151,19 +152,26 @@ def get_dataset(tokenizer, data_path):
                                 format_thing(thing, submission_id)
                                 for thing in candidates
                             ]
-                            if len(candidates) < min_candidates:
+                            if len(candidates) < 1:
                                 continue
 
-                            # FIXME (wassname), this repo seems to be factored for a static number of candidates per personality so lets clip at 3
-                            candidates = candidates[:min_candidates]
+                            # We want to have a max number of candidates so we don't run out of GPU mem. Extra ones go into a new entry
+                            for k in range(0, len(candidates), max_candidates):
+                                batch_candidates = candidates[k:k + max_candidates]
 
-                            utterance = dict(candidates=candidates, history=history)
-                            utterances.append(utterance)
+                                # Lets pad the sequence up to max candidates (is this needed?)
+                                batch_candidates = batch_candidates * max_candidates
+                                batch_candidates = batch_candidates[:max_candidates]
+
+                                utterance = dict(candidates=batch_candidates, history=history)
+                                utterances.append(utterance)
+
                         else:
                             logger.debug("skipping node with too few paths")
                 dataset2[split].append(
                     dict(personality=[personality], utterances=utterances)
                 )
+                logger.info("Example inputs for %s: %s", personality, utterance)
 
     logger.info("Tokenize and encode the dataset")
 
