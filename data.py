@@ -13,32 +13,14 @@ logger = logging.getLogger(__file__)
 
 def format_thing(thing, submission_id):
     if thing["type"] == "submission":
-        return (
-            "****S\n"
-            + "\n".join([thing["url"], thing["title"], thing.get("selftext", "")])
-            + "\n****ES "
-            + thing["id"]
-            + "\n"
+        return ( "\n".join([thing["url"], thing["title"], thing["author"], thing.get("selftext", "")])
         )
     elif thing["parent_id"] == submission_id:
-        return (
-            "****T "
-            + thing["parent_id"][3:]
-            + "\n"
-            + thing["body"]
-            + "\n****ET "
-            + thing["id"]
-            + "\n"
-        )
+        return (thing["author"] + '\n' + thing["body"] )
     else:
         return (
-            "****R "
-            + thing["parent_id"][3:]
-            + "\n"
-            + thing["body"]
-            + "\n****ER "
-            + thing["id"]
-            + "\n"
+            thing["author"] + '\n' + 
+            thing["body"]
         )
 
 

@@ -43,13 +43,39 @@ def pad_dataset(dataset, padding=0):
         dataset[name] = [x + [padding if name != "lm_labels" else -1] * (max_l - len(x)) for x in dataset[name]]
     return dataset
 
+def _truncate_seq_pair_n(tokens, max_length):
+    """Truncates a sequence pair in place to the maximum length."""
+
+    # This is a simple heuristic which will always truncate the longer sequence
+    # one token at a time. This makes more sense than truncating an equal percent
+    # of tokens from each, since if one sequence is very short then each token
+    # that's truncated likely contains more information than a longer sequence.
+    # from https://github.com/huggingface/pytorch-pretrained-BERT/blob/master/examples/run_classifier_dataset_utils.py#L482
+    while True:
+        total_length = sum(len(s) for s in tokens)
+        if total_length <= max_length:
+            break
+        longest = sorted(tokens, key=len, reverse=True)[0]
+        longest.pop()
+
 
 def build_input_from_segments(persona, history, reply, tokenizer, lm_labels=False, with_eos=True):
     """ Build a sequence of input from 3 segments: persona, history and last reply """
     bos, eos, speaker1, speaker2 = tokenizer.convert_tokens_to_ids(SPECIAL_TOKENS[:-1])
 
     instance = {}
-    sequence = [[bos] + list(chain(*persona))] + history + [reply + ([eos] if with_eos else [])]
+    sequence = [list(chain(*persona))] + history + [reply ]
+
+    
+    # Clip to by removing from longest message. Clip to max len len minus special tokens that will be added.
+    _truncate_seq_pair_n(sequence, tokenizer.max_len - len(history) - 2 - with_eos)
+    persona_c = sequence[0]
+    history_c = sequence[1:-1]
+    reply_c = sequence[-1]
+
+    # add tokens
+    sequence = [[bos] + persona_c] + history_c + [reply_c + ([eos] if with_eos else [])]
+    # add speaker tokens
     sequence = [sequence[0]] + [[speaker2 if (len(sequence)-i) % 2 else speaker1] + s for i, s in enumerate(sequence[1:])]
 
     instance["input_ids"] = list(chain(*sequence))
@@ -58,6 +84,10 @@ def build_input_from_segments(persona, history, reply, tokenizer, lm_labels=Fals
     instance["lm_labels"] = [-1] * len(instance["input_ids"])
     if lm_labels:
         instance["lm_labels"] = ([-1] * sum(len(s) for s in sequence[:-1])) + [-1] + sequence[-1][1:]
+
+    if len(instance["input_ids"]) > tokenizer.max_len:
+        logger.warn(f'input should be less than max len {len(instance["input_ids"])} < {tokenizer.max_len}')
+    # assert len(instance["input_ids"]) < tokenizer.max_len, f'input should be less than max len {len(instance["input_ids"])} < {tokenizer.max_len}'
     return instance, sequence
 
 
@@ -102,8 +132,8 @@ def get_data_loaders(args, tokenizer):
     train_loader = DataLoader(train_dataset, sampler=train_sampler, batch_size=args.train_batch_size, shuffle=(not args.distributed))
     valid_loader = DataLoader(valid_dataset, sampler=valid_sampler, batch_size=args.valid_batch_size, shuffle=False)
 
-    logger.info("Train dataset (Batch, Candidates, Seq length): {}".format(train_dataset.tensors[0].shape))
-    logger.info("Valid dataset (Batch, Candidates, Seq length): {}".format(valid_dataset.tensors[0].shape))
+    logger.info("Train dataset (Batch, Candidates, Seq length): {}. Batches: {}".format(train_dataset.tensors[0].shape, len(train_dataset)))
+    logger.info("Valid dataset (Batch, Candidates, Seq length): {}, Batches: {}".format(valid_dataset.tensors[0].shape, len(valid_dataset)))
     return train_loader, valid_loader, train_sampler, valid_sampler
 
 
