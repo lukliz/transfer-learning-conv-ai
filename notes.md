@@ -52,3 +52,6 @@ INFO:train.py:Valid dataset (Batch, Candidates, Seq length): torch.Size([2, 3, 1
 `python interact.py --device cpu --dataset_path ./data/reddit_threads --model_checkpoint runs/Jul09_15-44-47_mjcdesktop/`
 
 python interact.py  --model_checkpoint runs/Jul09_16-45-02_mjcdesktop --device cpu --dataset_path ./data/reddit_threads
+
+
+train.py --dataset_path ./data/reddit_threads --fp16 O2 --gradient_accumulation_steps 32 --train_batch_size 1 --valid_batch_size 1 --n_epochs 100
