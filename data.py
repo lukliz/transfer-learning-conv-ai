@@ -15,7 +15,7 @@ def format_thing(thing, submission_id):
     if thing["type"] == "submission":
         return (
             "****S\n"
-            + "\n".join([thing["url"], thing["title"], thing["selftext"]])
+            + "\n".join([thing["url"], thing["title"], thing.get("selftext", "")])
             + "\n****ES "
             + thing["id"]
             + "\n"
@@ -131,12 +131,13 @@ def get_dataset(tokenizer, data_path):
                         continue
                     
                     # get utterances
+                    min_candidates = 3
                     submission_id = get_id_for_comments(thread['submission'])
                     for current_node in nodes_by_id.values():
                         if (
                             current_node.parent
                             and len(current_node.path) > 1
-                            and len(current_node.children) > 2
+                            and len(current_node.children) >= min_candidates
                         ):
                             history = [
                                 format_thing(thing_by_id[node.name], submission_id)
@@ -148,18 +149,20 @@ def get_dataset(tokenizer, data_path):
                                 for node in current_node.children
                             ]
                             # FIXME (wassname), this repo seems to be factored for a static number of candidates per personality so lets clip at 3
-                            candidates = candidates[:3]
+                            candidates = candidates[:min_candidates]
 
                             utterance = dict(candidates=candidates, history=history)
                             utterances.append(utterance)
-            dataset2[split].append(dict(personality=[personality], utterances=utterances))
+                        else:
+                            logger.debug("skipping node with too few paths")
+                dataset2[split].append(dict(personality=[personality], utterances=utterances))
 
     logger.info("Tokenize and encode the dataset")
 
-    def tokenize(obj, max_seq_len=512):
+    def tokenize(obj):
         if isinstance(obj, str):
             return tokenizer.convert_tokens_to_ids(
-                tokenizer.tokenize(obj)[:max_seq_len]
+                tokenizer.tokenize(obj)[:tokenizer.max_len]
             )
         if isinstance(obj, dict):
             return dict((n, tokenize(o)) for n, o in obj.items())
