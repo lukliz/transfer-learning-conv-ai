@@ -55,3 +55,6 @@ python interact.py  --model_checkpoint runs/Jul09_16-45-02_mjcdesktop --device c
 
 
 train.py --dataset_path ./data/reddit_threads --fp16 O2 --gradient_accumulation_steps 32 --train_batch_size 1 --valid_batch_size 1 --n_epochs 100
+
+
+- Trying with no authors, with 1-3 candidates (most are 1 naturally so we shall see). And with longer history
