@@ -47,7 +47,7 @@ INFO:train.py:Train dataset (Batch, Candidates, Seq length): torch.Size([8, 2, 2
 INFO:train.py:Valid dataset (Batch, Candidates, Seq length): torch.Size([2, 3, 199])
 
 `python train.py --dataset_path ./data/reddit_threads --fp16 O1 --gradient_accumulation_steps 16 --train_batch_size 2 --valid_batch_size 2 --n_epochs 10`
-`python train.py --dataset_path ./data/reddit_threads --fp16 O2 --gradient_accumulation_steps 32 --train_batch_size 1 --valid_batch_size 1 --n_epochs 10`
+`python -m ipdb train.py --dataset_path ./data/reddit_threads --fp16 O2 --gradient_accumulation_steps 32 --train_batch_size 1 --valid_batch_size 1 --n_epochs 10`
 
 `python interact.py --device cpu --dataset_path ./data/reddit_threads --model_checkpoint runs/Jul09_15-44-47_mjcdesktop/`
 
@@ -159,3 +159,5 @@ Because we haven't seen it yet
 TODO:
 - [ ] Show how it works each epoch
 - [ ] Try GPT-2 medium on colab
+  - [x] nope can't use with fp16 on 16GB or gpu ram. Pytorch doesn't support TPU's
+  - [ ] What about a gcloud K80 with 24GB?
