@@ -8,13 +8,15 @@ from argparse import ArgumentParser
 from itertools import chain
 from pprint import pformat
 from colored import fg, bg, attr
+import coloredlogs
 
 import torch
 import torch.nn.functional as F
 
 from pytorch_pretrained_bert import OpenAIGPTLMHeadModel, OpenAIGPTTokenizer, GPT2LMHeadModel, GPT2Tokenizer
 from train import SPECIAL_TOKENS, build_input_from_segments
-from utils import get_dataset_personalities, download_pretrained_model
+from utils import get_dataset_personalities, download_pretrained_model 
+coloredlogs.install()
 
 def top_filtering(logits, top_k=0, top_p=0.0, threshold=-float('Inf'), filter_value=-float('Inf')):
     """ Filter a distribution of logits using top-k, top-p (nucleus) and/or threshold filtering
@@ -29,7 +31,7 @@ def top_filtering(logits, top_k=0, top_p=0.0, threshold=-float('Inf'), filter_va
     """
     assert logits.dim() == 1  # Only work for batch size 1 for now - could update but it would obfuscate a bit the code
     top_k = min(top_k, logits.size(-1))
-    if top_k > 0:
+    if top_k > 0: 
         # Remove all tokens with a probability less than the last token in the top-k tokens
         indices_to_remove = logits < torch.topk(logits, top_k)[0][..., -1, None]
         logits[indices_to_remove] = filter_value
@@ -97,7 +99,7 @@ def run():
     parser.add_argument("--no_sample", action='store_true', help="Set to use greedy decoding instead of sampling")
     parser.add_argument("--max_length", type=int, default=20, help="Maximum length of the output utterances")
     parser.add_argument("--min_length", type=int, default=1, help="Minimum length of the output utterances")
-    parser.add_argument("--seed", type=int, default=42, help="Seed")
+    parser.add_argument("--seed", type=int, default=None, help="Seed")
     parser.add_argument("--temperature", type=int, default=0.7, help="Sampling softmax temperature")
     parser.add_argument("--top_k", type=int, default=0, help="Filter top-k tokens before sampling (<=0: no filtering)")
     parser.add_argument("--top_p", type=float, default=0.9, help="Nucleus filtering (top-p) before sampling (<=0.0: no filtering)")
@@ -110,9 +112,10 @@ def run():
     if args.model_checkpoint == "":
         args.model_checkpoint = download_pretrained_model()
 
-    random.seed(args.seed)
-    torch.random.manual_seed(args.seed)
-    torch.cuda.manual_seed(args.seed)
+    if args.seed is not None:
+        random.seed(args.seed)
+        torch.random.manual_seed(args.seed)
+        torch.cuda.manual_seed(args.seed)
 
     logger.info("Get pretrained model and tokenizer")
     tokenizer_class = GPT2Tokenizer if "gpt2" == args.model else OpenAIGPTTokenizer
@@ -126,7 +129,7 @@ def run():
     logger.info("Sample a personality")
     personalities = get_dataset_personalities(tokenizer, args.dataset_path, args.dataset_cache)
     personality = random.choice(personalities)
-    logger.info("Selected personality: %s", tokenizer.decode(chain(*personality)))
+    logger.info("Selected personality: /r/%s", tokenizer.decode(chain(*personality)))
 
     history = []
     while True:
@@ -147,7 +150,7 @@ def run():
         history.append(out_ids)
         history = history[-(2*args.max_history+1):]
         out_text = tokenizer.decode(out_ids, skip_special_tokens=True)
-        print(f'{fg(17)}robot: {out_text}{attr(0)}')
+        print(f'{fg(6)}robot: {attr(0)}{out_text}')
 
 
 if __name__ == "__main__":
