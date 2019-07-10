@@ -6,7 +6,7 @@ This repo uses reddit data from pushshift.io to create a chat bot. It's like the
 - install the requirements in `requirements.txt` you will need `pytorch-pretrained-bert>0.6.2` which may be the latest git release
   - You may get an error where ignore is using log_dir instead of logdir. I used a hack to fix this, I'm sure there is a better way than editing ignite.
 - get data with `fetch_pushshift_data.py` (run overnight)
-- with a nvidia 2080 ti you can run with `python train.py --dataset_path ./data/reddit_threads --fp16 O2 --gradient_accumulation_steps 32 --train_batch_size 1 --valid_batch_size 1 --n_epochs 3`
+- with a nvidia 2080 ti you can run with `python -m ipdb train.py --dataset_path ./data/reddit_threads --fp16 O2 --gradient_accumulation_steps 32 --train_batch_size 1 --valid_batch_size 1 --n_epochs 3`
 - interact with `python interact.py --device cpu --dataset_path ./data/reddit_threads --model_checkpoint runs/Jul09_15-44-47_mjcdesktop/`
 
 If you want me to share the dataset and a pretrained model, just ask in the issues. I'm hesitant to do the work to share it if no one wants it.
@@ -64,7 +64,7 @@ Because we haven't seen it yet
 
 Restricting to longer comments:
 
-``` 
+```
 INFO:interact.py:Namespace(dataset_cache='./dataset_cache', dataset_path='./data/reddit_threads', device='cpu', max_history=6, max_length=20, min_length=1, model='gpt2', model_checkpoint='runs/Jul10_06-54-02_mjcdesktop/', no_sample=False, seed=42, temperature=0.7, top_k=0, top_p=0.9)
 INFO:interact.py:Selected personality: totallynotrobots
 >>> Hi how is it human

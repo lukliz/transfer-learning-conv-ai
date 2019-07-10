@@ -7,6 +7,7 @@ ParlAI/
 __pycache__
 /.secrets
 /.cache
+/notebooks
 
 # Created by https://www.gitignore.io/api/git,code,linux,python,jupyternotebooks
 # Edit at https://www.gitignore.io/?templates=git,code,linux,python,jupyternotebooks
