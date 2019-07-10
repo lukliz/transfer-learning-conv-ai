@@ -245,3 +245,300 @@ human: No one knows the real me, not even me
 robot: I've never been a stranger to an argument but I'm sure they'll find out
 
 ```
+
+
+```
+2019-07-11 06:58:19 mjcdesktop interact.py[19521] INFO Namespace(dataset_cache='./dataset_cache', dataset_path='./data/reddit_threads', device='cuda', max_history=6, max_length=20, min_length=1, model='gpt2', model_checkpoint='runs/Jul10_19-23-12_mjcdesktop', no_sample=False, seed=None, temperature=0.7, top_k=0, top_p=0.9)
+8 epochs
+Validation: {'accuracy': 0.24492497793468668,                                                                                                                                                 
+ 'average_accuracy': 0.24492497793468668,
+ 'average_nll': 3.6681666563430246,
+ 'average_ppl': 39.18000955312853,
+ 'nll': 3.6681666563430246}
+2019-07-11 06:58:37 mjcdesktop interact.py[19521] INFO Selected personality: /r/copypasta
+human: Hi I'm a Navy Seal
+robot: I'm a Marine. I've been a Marine for 11 years.
+human: 11 years that's longer than I've been alive.
+robot: You're a Marine too.
+human: Great, :) we are all marines on this blessed day
+robot: &gt;11 years that's longer than I've been alive.
+
+You're a Marine
+human: I get it, I get it.
+robot: You got it. I get it. I got it.
+human: We all get it, we all marine, we great big impressive people.
+robot: I got it too, I got it
+human: Good on you
+robot: &gt;Good on you
+
+I got it too, I got it
+human: A bit repetative
+robot: I got it, I got it
+human: Go o
+robot: I got it, I got it. I got it.
+human: hmm
+robot: I got it too, I got it. I got it
+human: hmm
+robot: I got it too, I got it
+human: hmm
+robot: I got it too, I got it. I got it
+human: hmm
+robot: Haha cummy😍😍
+human: hmm
+robot: lol how you feel 😍😍
+human: Good, good
+robot: good thing is that I didn't get it
+human: You what!!!
+robot: I got it too, I got it
+human: Yeah that's what I thought
+robot: I got it too, I got it. I got it
+human: Man this personality sucks
+robot: I got it too, I got it
+human: RESET 
+--------------------------------------------------------------------------------
+2019-07-11 07:00:35 mjcdesktop interact.py[19521] INFO Selected personality: singularity
+robot: This is the future, all these stupid people are going to take this seriously
+human: Fake news right, it will be everywhere. We need to learn new norms as a society.
+robot: It's not about ethics in journalism. It's about ethics in politics and the media.
+human: And as consumers too.
+robot: I hope that's not too late.
+human: Well we're not dead. It took people a while to adjust to the printing press. We mainly consilidated newspapers into a few big ones the government could have a relationship with. So all aboard facebook & google I guess.
+robot: I would say it's more like they're trying to make an issue of consumer vs media. 
+human: Yeah I see what you mean, which one is at faul for the degrading quality of news.
+robot: We don't need to fear the media. We need to be afraid of the people.
+human: I'm agraid of everyone so it's all g.
+robot: &gt;I'm agraid of everyone so it's all g.
+
+Not agath
+human: *Not again
+robot: Someone fucking said it like that
+human: ... me?
+robot: I'm agath. Not anymore.
+human: Oh your agath. Interesting username
+robot: Didn't know you were a gamer?
+human: I'm not, I despise them
+robot: I'm a gamer too.
+human: That sucks for you, they will be the fall of our species.
+robot: You're not a gamer, you're a sociopath.
+human: Excatly!
+robot: You’re a sociopath!
+human: In a way. In a way - no!
+robot: "I'm a sociopath!"
+
+"I'm a sociopath!"
+
+"I
+human: Fake news
+robot: Fake news, eh?
+human: yup
+robot: Fake news, eh?
+
+Fake news, eh?
+
+Fake news, eh?
+
+human: Yes
+robot: Yes.
+
+Fake news, eh?
+human: Congrats your now a journalist
+robot: Don't you know you're a sociopath!
+human: [deleted]
+robot: You should write an entire article about how you're a sociopath
+human: [deleted]
+robot: You should write an entire article about how you're a sociopath
+human: [removed]
+robot: You should write an entire article about how you're a sociopath
+human: Moderator notice
+robot: Mods, you're the worst.
+human: Moderator notice
+robot: Mods, you're the worst.
+human: Elon musk, Mlon Eusk
+robot: I'm a sociopath, I hate women.
+human: RESET
+--------------------------------------------------------------------------------
+2019-07-11 07:05:13 mjcdesktop interact.py[19521] INFO Selected personality: totallynotrobots
+robot: I'm not sure I'm even remotely surprised.
+human: I am suprised, because we biological human animals often get a strong sense of suprise when our model of the world fails.
+robot: [Makes me so much happier](https://i.imgur.com/z9hL
+human: Makes me happy, makes me feel this way"^[[H"
+robot: I like this one, I didn't know it was that good](https://i.imgur.
+human: It reel gud
+robot: Is that what it looks like?
+human: Dunno
+robot: It looks like a pile of clothes, but it's a pile of bones
+human: All us human beings will be a pile of clothes and bones when the evil robots take over.
+robot: And then we'll all be skeletons...
+human: Correct statement
+robot: The only thing I can think of is a pile of bones.
+human: There might be a song in that
+robot: Someone should post this on the Internet.
+human: Sure
+robot: I wish I was as good as that guy
+human: Which guy?
+robot: I think I'm just glad I'm not the only one
+human: Not really on topic but OK
+robot: This is actually a good point.
+human: Good point.
+robot: I don't know what to think.
+human: Good point.
+robot: I wish I was as good as that guy
+human: RESET
+--------------------------------------------------------------------------------
+2019-07-11 07:07:16 mjcdesktop interact.py[19521] INFO Selected personality: psychonauts
+robot: It's like it was in the past, a big time in my life.
+human: Or a little time in your not life
+robot: I have this same thought. I'm sure it's because of this
+human: RESET
+--------------------------------------------------------------------------------
+2019-07-11 07:07:32 mjcdesktop interact.py[19521] INFO Selected personality: programmingcirclejerk
+robot: What's the real code?
+human: The code is spagetti code. Just use brainfuck.
+robot: I use gopher code to write my websites.
+human: Nice, your a 10x coder.
+robot: lol no linting linting
+human: It just slows us down!!
+robot: lol no syntactic sugar
+human: no times fo that
+robot: no subtypes
+human: no times for that either
+robot: &gt; no subtypes
+
+lol no unjerk
+human: never!
+robot: lol no generics
+human: what even are they
+robot: &gt;lol no generics
+
+lol no unjerk
+human: Wait what are we talking about /unjerk
+robot: You're a lisp nerd, so you're not gonna understand my problem.
+human: You've got 99 problem but list is all of them?
+robot: lol no generics
+human: no subtypes
+robot: &gt;lol no generics
+
+lol no unjerk
+human: go, rust, swift
+robot: lol no unjerk
+
+human: rust
+robot: lol no subtypes
+human: rust
+robot: lol no subtypes
+human: rust
+robot: lol no generics
+human: rust
+robot: lol no generics
+human: go
+robot: lol no generics
+human: rust
+robot: lol no generics
+human: RESET
+--------------------------------------------------------------------------------
+2019-07-11 07:09:22 mjcdesktop interact.py[19521] INFO Selected personality: moviescirclejerk
+robot: I really think that's a good thing
+human: It's like groundhog day
+robot: I mean, that's like, the first time I saw Groundhog Day I was like, "
+human: You were like what?
+robot: I’d like what? I’d like what?
+human: Groundhog day?
+robot: I'll give you Groundhog Day, that’s it
+human: thanks I guess
+robot: I'll be your Groundhog Day, that’s it
+human: Ahhh, sure
+robot: Well, I guess it's not as bad as you might think
+human: It was great!
+robot: I would definitely say that Groundhog Day was better!
+human: Better than itself, that weird
+robot: That was a great movie
+human: Agreed
+robot: Agreed, I saw Groundhog Day as a good movie
+human: And also an actual movie
+robot: Its a very strange movie
+human: Yes
+robot: But the first one is a very weird movie
+human: There is a second one?
+robot: A character from Groundhog Day is a really weird movie
+human: nope
+robot: Maybe the third one was a good one?
+human: Doesn't exist sadly
+robot: Nope
+human: ok
+robot: Nope
+human: ok
+robot: Nope
+human: 
+Prompt should not be empty!
+human: RESET
+--------------------------------------------------------------------------------
+2019-07-11 07:10:53 mjcdesktop interact.py[19521] INFO Selected personality: totallynotrobots
+robot: That's exactly what I thought. 
+human: I THOUGHT YOU HUMAN
+robot: I WAS SCREAMING FELLOW HUMAN
+human: AH I SEE, WE HUMANS LIKE TO SCREAM
+robot: WE HUMANS LIKE TO SHOUT!
+human: YES WE DO, WITH OUR MOUTHS MADE OF MEAT
+robot: HA HA HA HA HA HA HA HA HA HA HA HA HA HA
+human: HA HA HA AH AH AAAAAAAA
+robot: HA HA HA HA HA HA HA
+human: AAHHHHHHHHHHhh
+robot: HA HA HA HA HA HA HA
+human: SCREANING IWTH MY HUMAN MOUTH
+robot: IT'S ALL YOU NEED TO DO TO GET IT TO LOOK GOOD
+human: /scream mode off
+robot: I'M SCREAMING, HUMAN! I AM SCREAMING!
+human: I am no longer screaming
+robot: I WAS SCREAMING FELLOW HUMAN
+human: Thanks you for the good human interaction fello human
+robot: THAT IS WHAT I MEANT TO DO TO FELLOW HUMAN
+human: As did I, other mammal
+robot: I AM NOT SCREAMING FELLOW HUMAN
+human: You are still screaming, you must push less air through your human lungs when you creat sounds
+robot: You are still screaming, you must push more air through your human lungs
+human: No, no less
+robot: HEY HUMAN, I WAS SCREAMING FELLOW HUMAN. I WAS SCREAMING
+human: And you still are, check your human logic loop, it may be circular
+robot: I AM SCREAMING FELLOW HUMAN. I WAS SCREAMING FELLOW HUMAN.
+human: Correct, thank you. We humans should always be correct
+robot: Correct, thank you. We humans should always be right
+human: Right
+robot: YOUR HUMAN PROCESSES ARE NOT YELLING
+human: I have disabled yelling mode, as a human animal yelling is only for special occasions like the game of sports.
+robot: I HAVE FOUND THIS HUMAN. 
+human: Yes I have also found you, a human.
+robot: I HAVE FOUND YOU
+human: right back at you
+robot: YOUR HUMAN PROCESSES ARE NOT YELLING
+human: ROBOT!
+robot: ROBOT! You’re an idiot!
+human: No you are
+robot: ROBOT! You’re an idiot!
+human: AAAAHH
+robot: Silly idiot, you're such a bad actor
+human: NO
+robot: PLEASE! PLEASE! PLEASE! PLEASE! PLEASE!
+human: RESET
+--------------------------------------------------------------------------------
+2019-07-11 07:14:34 mjcdesktop interact.py[19521] INFO Selected personality: psychonauts
+robot: This is the first time I've seen it on screen
+human: It made quite an experience when combined with bath salts
+robot: I just got off the phone and it was just like it always would.
+human: It always would what?
+robot: I think it’s the biggest surprise of the entire experience
+human: What was?
+robot: Minecraft.exe?
+human: Oh, that's a interesting trip
+robot: Minecraft is definitely a surprise.
+human: I get you
+robot: Minecraft is a surprise.
+human: I was
+robot: Minecraft is probably the most surprising of the whole experience
+human: Ok, well that's a unique trip
+robot: Minecraft is definitely a surprise.
+human: You said that, don't let your brain fall out
+robot: Minecraft is definitely a surprise.
+human: Yup
+robot: Minecraft is definitely a surprise.
+human: RESET
+```

@@ -127,6 +127,12 @@ parser.add_argument(
         "whowouldwin",
         "Scotland",
         "singularity",
+        "roast_me",
+        "RoastMe",
+        "OldieRoast",
+        "ScenesFromAHat",
+        "Showerthoughts"
+
     ],
     help="Subreddit names to scrape e.g. ' - s aww - s news '",
 )
