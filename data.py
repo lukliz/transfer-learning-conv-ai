@@ -1,4 +1,5 @@
 import collections
+import random
 import copy
 import itertools
 import pickle
@@ -80,6 +81,7 @@ def get_dataset(tokenizer, data_path):
         subreddit_files = sorted(subreddit_path.glob("*.pickle"))
         if len(subreddit_files)>10:
             subreddit = subreddit_path.name
+            print(split, len(subreddit_files), subreddit)
 
             # split
             train_files, test_files = train_test_split(
@@ -110,6 +112,7 @@ def get_dataset(tokenizer, data_path):
                         )
                     except Exception as e:
                         logger.warn("Exception for file '%s', '%s'", file, e)
+                        # file.unlink()
                         continue
 
                     # get utterances
@@ -120,7 +123,7 @@ def get_dataset(tokenizer, data_path):
                         if (
                             current_node.parent
                             and len(current_node.path) > 1
-                            and len(current_node.children) >= 1 #min_candidates
+                            and len(current_node.children) >= 3 #min_candidates
                         ):
                             history = [
                                 format_thing(thing_by_id[node.name], submission_id)
@@ -146,7 +149,10 @@ def get_dataset(tokenizer, data_path):
                                 lambda x: "[removed]" not in x.get("body", ""), candidates
                             )
                             candidates = filter(
-                                lambda x: x.get("stickied", False) != True, candidates
+                                lambda x: len(x.get("body", "")) > 30, candidates
+                            )
+                            candidates = filter(
+                                lambda x: not x.get("stickied", False), candidates
                             )
                             candidates = [
                                 format_thing(thing, submission_id)
@@ -171,7 +177,8 @@ def get_dataset(tokenizer, data_path):
                 dataset2[split].append(
                     dict(personality=[personality], utterances=utterances)
                 )
-                logger.info("Example inputs for %s: %s", personality, utterance)
+                if split=='train' and random.random()<0.2:
+                    logger.info("Example inputs for %s: %s", personality, utterance)
 
     logger.info("Tokenize and encode the dataset")
 
