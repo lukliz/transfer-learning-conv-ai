@@ -94,7 +94,7 @@ def build_input_from_segments(persona, history, reply, tokenizer, lm_labels=Fals
 
 def get_data_loaders(args, tokenizer):
     """ Prepare the dataset for training and evaluation """
-    personachat = get_dataset(tokenizer, args.dataset_path)
+    personachat = get_dataset(tokenizer, args.dataset_path, max_candidates=args.num_candidates)
 
     logger.info("Build inputs and labels")
     datasets = {"train": defaultdict(list), "valid": defaultdict(list), "test": defaultdict(list)}
@@ -142,7 +142,7 @@ def train():
     parser = ArgumentParser()
     parser.add_argument("--dataset_path", type=str, default="", help="Path or url of the dataset. If empty download from S3.")
     parser.add_argument("--model_checkpoint", type=str, default="gpt2", help="Path, url or short name of the model")
-    parser.add_argument("--num_candidates", type=int, default=3, help="Number of candidates for training")
+    parser.add_argument("--num_candidates", type=int, default=3, help="Number of candidates for training. Larger numbers may not fit on your GPU")
     parser.add_argument("--max_history", type=int, default=6, help="Number of previous exchanges to keep in history")
     parser.add_argument("--train_batch_size", type=int, default=4, help="Batch size for training")
     parser.add_argument("--valid_batch_size", type=int, default=4, help="Batch size for validation")

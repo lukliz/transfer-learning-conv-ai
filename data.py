@@ -58,7 +58,7 @@ def thread2tree(comment_dict, submission):
     return nodes_by_id, thing_by_id
 
 
-def get_dataset(tokenizer, data_path):
+def get_dataset(tokenizer, data_path, min_candidates=1, max_candidates = 3):
     """
     Load pickle files with reddit comments.
 
@@ -117,13 +117,12 @@ def get_dataset(tokenizer, data_path):
 
                     # get utterances
                     # Make a max number of candidates that will fit on your GPU
-                    max_candidates = 3
                     submission_id = get_id_for_comments(thread["submission"])
                     for current_node in nodes_by_id.values():
                         if (
                             current_node.parent
                             and len(current_node.path) > 1
-                            and len(current_node.children) >= 3 #min_candidates
+                            and len(current_node.children) >= min_candidates
                         ):
                             history = [
                                 format_thing(thing_by_id[node.name], submission_id)
