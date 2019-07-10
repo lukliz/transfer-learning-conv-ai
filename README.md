@@ -3,8 +3,10 @@ This repo uses reddit data from pushshift.io to create a chat bot. It's like the
 ## Running
 
 - clone the repo `git clone https://github.com/wassname/transfer-learning-conv-ai.git`
+- install the requirements in `requirements.txt` you will need `pytorch-pretrained-bert>0.6.2` which may be the latest git release
+  - You may get an error where ignore is using log_dir instead of logdir. I used a hack to fix this, I'm sure there is a better way than editing ignite.
 - get data with `fetch_pushshift_data.py` (run overnight)
-- with a 2080 ti you can run with `python train.py --dataset_path ./data/reddit_threads --fp16 O2 --gradient_accumulation_steps 32 --train_batch_size 1 --valid_batch_size 1 --n_epochs 3`
+- with a nvidia 2080 ti you can run with `python train.py --dataset_path ./data/reddit_threads --fp16 O2 --gradient_accumulation_steps 32 --train_batch_size 1 --valid_batch_size 1 --n_epochs 3`
 - interact with `python interact.py --device cpu --dataset_path ./data/reddit_threads --model_checkpoint runs/Jul09_15-44-47_mjcdesktop/`
 
 If you want me to share a dataset and pretrained model, just ask.

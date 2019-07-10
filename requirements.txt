@@ -1,8 +1,15 @@
-torch
-pytorch-ignite
-pytorch-pretrained-bert>0.6.2
-tensorboardX
+torch>1.0.0
+pytorch-ignite==0.2.0
+# Until 0.6.3 is out we can use this pip install
+git+https://github.com/huggingface/pytorch-pretrained-BERT.git@78462aad6113d50063d8251e27dbaadb7f44fbf0
+# pytorch-pretrained-bert>0.6.2
+tensorboardX==1.7
 tensorflow  # for tensorboardX
 anytree
-sklearn
+scikit-learn
 tqdm
+colorlogs
+colored
+pandas
+psaw
+coloredlogs

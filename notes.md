@@ -1,4 +1,4 @@
-- get data with `1_fetch_pushshift_data` (run overnight)
+- get data with `fetch_pushshift_data.py` (run overnight)
 - concat with `2_`
 
 run
