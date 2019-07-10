@@ -81,7 +81,7 @@ def get_dataset(tokenizer, data_path, min_candidates=1, max_candidates = 3):
         subreddit_files = sorted(subreddit_path.glob("*.pickle"))
         if len(subreddit_files)>10:
             subreddit = subreddit_path.name
-            print(len(subreddit_files), subreddit)
+            print(f'{len(subreddit_files):10d} threads from /r/{subreddit}')
 
             # split
             train_files, test_files = train_test_split(
@@ -148,7 +148,7 @@ def get_dataset(tokenizer, data_path, min_candidates=1, max_candidates = 3):
                                 lambda x: "[removed]" not in x.get("body", ""), candidates
                             )
                             candidates = filter(
-                                lambda x: len(x.get("body", "")) > 30, candidates
+                                lambda x: len(x.get("body", "")) > 50, candidates
                             )
                             candidates = filter(
                                 lambda x: not x.get("stickied", False), candidates
