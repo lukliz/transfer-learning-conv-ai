@@ -16,6 +16,8 @@ If you want me to share the dataset and a pretrained model, just ask in the issu
 Are poor (see TODO below for ideas)
 
 ```
+INFO:interact.py:Namespace(dataset_cache='./dataset_cache', dataset_path='./data/reddit_threads', device='cuda', max_history=6, max_length=20, min_length=1, model='gpt2', model_checkpoint='runs/Jul09_21-25-16_mjcdesktop', no_sample=False, seed=42, temperature=0.7, top_k=0, top_p=0.9)
+
 Goodbye
 >>> RESET
 --------------------------------------------------------------------------------
@@ -58,6 +60,40 @@ Yes.
 >>> Why?
 Because we haven't seen it yet
 >>> Ok cool, good for you
+```
+
+Restricting to longer comments:
+
+``` 
+INFO:interact.py:Namespace(dataset_cache='./dataset_cache', dataset_path='./data/reddit_threads', device='cpu', max_history=6, max_length=20, min_length=1, model='gpt2', model_checkpoint='runs/Jul10_06-54-02_mjcdesktop/', no_sample=False, seed=42, temperature=0.7, top_k=0, top_p=0.9)
+INFO:interact.py:Selected personality: totallynotrobots
+>>> Hi how is it human
+No this is so funny. 
+>>> With this latest run I'm hoping you can do longer comments?
+Wow, what a memorable run. 
+>>> What made it memorable, and do you mean a run like a bipedal mammal, or run like a evil ROBOT?
+I thought I was in for a ride
+>>> Ride or run? Bipedal mammal humans such as I often use our legs to run. But robot perhaps RIDE???
+Wow, that’s a real horse
+>>> Yes I am a biological organism but I am not an equine, I am a hemoglobin blooded human animal
+Oh, you're so real!
+>>> Yes I'm glad you noticed that :)
+Wow, that’s a real horse
+>>> No I said I'm NOT A HORSE
+I’m a hemoglobin blooded human animal. 
+>>> RESET
+--------------------------------------------------------------------------------
+INFO:interact.py:Selected personality: psychonauts
+The half-truth is that the only thing I was conscious of was my brain. 
+>>> Perhaps that's just because you body was numb. What was the whole-truth?
+Wow, your brain is a good one
+>>> Yeah thanks dude
+I just think you're an idiot, you're a stupid cunt and a stupid human.
+>>> *think's
+[deleted]
+I'm sorry, I'm sorry, I'm sorry I'm sorry
+>>> [deleted]
+I'm sorry, I'm sorry I'm sorry
 ```
 
 ## TODO:
