@@ -107,7 +107,27 @@ parser.add_argument(
     "--subreddit",
     type=str,
     action="append",
-    default=['aww', 'funny', 'art', 'programmingcirclejerk', 'futurology', 'theonion', 'upliftingnews', 'news', 'bruhmoment', 'moviescirclejerk', 'copypasta', 'emojipasta', 'nosleep', 'rareinsults', 'psychonauts', 'squaredcircle', 'whowouldwin', 'Scotland', 'singularity'],
+    default=[
+        "aww",
+        "funny",
+        "art",
+        "programmingcirclejerk",
+        "futurology",
+        "theonion",
+        "upliftingnews",
+        "news",
+        "bruhmoment",
+        "moviescirclejerk",
+        "copypasta",
+        "emojipasta",
+        "nosleep",
+        "rareinsults",
+        "psychonauts",
+        "squaredcircle",
+        "whowouldwin",
+        "Scotland",
+        "singularity",
+    ],
     help="Subreddit names to scrape e.g. ' - s aww - s news '",
 )
 parser.add_argument(
@@ -207,27 +227,43 @@ def comment_praw2psaw(comment_praw):
     cp_dict["parent_id"] = cp_dict["parent_id"][3:]
     return cp_dict
 
+
 random.shuffle(args.subreddit)
 for subreddit in tqdm(args.subreddit, unit="subreddit"):
     try:
         print(subreddit)
 
         # Since the api often only returns 1000, lets query in monthly intervals
-        dates = pd.date_range('2018', '2019', freq='3M')
+        dates = pd.date_range("2018", "2019", freq="3M")
         date_bins = list(zip(dates[:-1], dates[1:]))
         random.shuffle(date_bins)
 
         with tqdm(
-                desc=subreddit, unit="submission", total=args.number_of_threads
-            ) as prog:
+            desc=subreddit, unit="submission", total=args.number_of_threads
+        ) as prog:
 
             for after, before in date_bins:
-                logger.info('%s', dict(subreddit=subreddit, num_comments=">10", after=after, before=before, sort_type="num_comments"))
-                submissions = api.search_submissions(subreddit=subreddit, num_comments=">10", after=after, before=before, sort_type="num_comments")
+                logger.info(
+                    "%s",
+                    dict(
+                        subreddit=subreddit,
+                        num_comments=">10",
+                        after=after,
+                        before=before,
+                        sort_type="num_comments",
+                    ),
+                )
+                submissions = api.search_submissions(
+                    subreddit=subreddit,
+                    num_comments=">10",
+                    after=after,
+                    before=before,
+                    sort_type="num_comments",
+                )
                 out_dir = data_dir.joinpath(subreddit)
                 os.makedirs(out_dir, exist_ok=True)
                 if len(list(out_dir.glob("*.text"))) > args.number_of_threads:
-                    print(f'stopping at {args.number_of_threads} threads')
+                    print(f"stopping at {args.number_of_threads} threads")
                     break
                 for submission in submissions:
                     submission = psaw_to_dict(submission)
@@ -236,41 +272,51 @@ for subreddit in tqdm(args.subreddit, unit="subreddit"):
 
                     if not out_file.is_file():
                         # Get comments
-                        submission_comment_ids = api._get_submission_comment_ids(submission["id"])
+                        submission_comment_ids = api._get_submission_comment_ids(
+                            submission["id"]
+                        )
                         comment_dict = collections.defaultdict(list)
 
-                        # Use eiehter psaw
-                        comments = api.search_comments(ids=submission_comment_ids)
-                        # It will just repeat unless we set a limit
-                        comments = [
-                            next(comments)
-                            for _ in tqdm(
-                                range(submission["num_comments"]), leave=False, unit="comment"
+                        # Use psaw
+                        try:
+                            
+                            comments = api.search_comments(ids=submission_comment_ids)
+                            # It will just repeat unless we set a limit
+                            comments = [
+                                next(comments)
+                                for _ in tqdm(
+                                    range(submission["num_comments"]),
+                                    leave=False,
+                                    unit="comment",
+                                )
+                            ]
+                            # Or praw... nah slow
+                            #             comments = [comment_praw2psaw(reddit.comment(id).refresh()) for id in submission_comment_ids]
+                            for comment in comments:
+                                comment = psaw_to_dict(comment)
+                                comment_dict[comment["parent_id"]].append(comment)
+
+                            # sort by karma, if available
+                            for key in comment_dict.keys():
+                                comment_dict[key].sort(
+                                    key=lambda x: x.get("score", 0), reverse=True
+                                )
+
+                            # pickle so we will have original data if wanted, that way we can make changes to input data formatting
+                            out_pkl = out_dir.joinpath(submission_id + ".pickle")
+                            pickle.dump(
+                                dict(submission=submission, comment_dict=comment_dict),
+                                out_pkl.open("wb"),
                             )
-                        ]
-                        # Or praw... nah slow
-                        #             comments = [comment_praw2psaw(reddit.comment(id).refresh()) for id in submission_comment_ids]
-                        for comment in comments:
-                            comment = psaw_to_dict(comment)
-                            comment_dict[comment["parent_id"]].append(comment)
+                            logger.debug("writing pickle %s", out_pkl)
 
-                        # sort by karma, if available
-                        for key in comment_dict.keys():
-                            comment_dict[key].sort(key=lambda x: x.get("score", 0), reverse=True)
+                            # format
+                            # text = format_comments_dict(comment_dict, submission)
 
-                        # pickle so we will have original data if wanted, that way we can make changes to input data formatting
-                        out_pkl = out_dir.joinpath(submission_id + ".pickle")
-                        pickle.dump(
-                            dict(submission=submission, comment_dict=comment_dict),
-                            out_pkl.open("wb"),
-                        )
-                        logger.debug("writing pickle %s", out_pkl)
-
-                        # format
-                        # text = format_comments_dict(comment_dict, submission)
-
-                        # # write out thread
-                        # out_file.write_text(text)
+                            # # write out thread
+                            # out_file.write_text(text)
+                        except Exception as e:
+                            logger.warn(e)
                         prog.update(1)
                     else:
                         logger.debug("skipping existing file %s", out_file)
