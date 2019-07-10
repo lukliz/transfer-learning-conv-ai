@@ -107,6 +107,14 @@ I'm sorry, I'm sorry I'm sorry
   - [ ] Scrape to one big file, perhaps sqllite or jsonl
 - [ ] Deploy: if good interact with it on IRC
 
+
+## Errors:
+
+- `2019-07-10 02:35:49 ip-172-31-39-133 ignite.engine.engine.Engine[7647] ERROR Engine run is terminating due to exception: Creating MTGP constants failed. at /opt/conda/conda-bld/pytorch_1556653099582/work/aten/src/THC/THCTensorRandom.cu:33.  `
+  - This means your GPU is full, reduce batch size or get a GPU with more ram
+- `TypeError: __init__() got an unexpected keyword argument 'log_dir`
+  - This is a tensorflowX vs ignite version problem, [see this github issue](https://github.com/pytorch/ignite/issues/534), and try new or old versions of these packages.
+
 -----
 
 Forked from
