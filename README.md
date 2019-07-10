@@ -12,87 +12,59 @@ If you want me to share the dataset and a pretrained model, just ask in the issu
 
 ## Current results
 
-Are poor (see TODO below for ideas)
+Are OK (see TODO below for ideas)
 
 ```
-INFO:interact.py:Namespace(dataset_cache='./dataset_cache', dataset_path='./data/reddit_threads', device='cuda', max_history=6, max_length=20, min_length=1, model='gpt2', model_checkpoint='runs/Jul09_21-25-16_mjcdesktop', no_sample=False, seed=42, temperature=0.7, top_k=0, top_p=0.9)
-
-Goodbye
->>> RESET
 --------------------------------------------------------------------------------
-INFO:interact.py:Selected personality: shittyaskscience
-#r/lostredditors
->>> Yeah I guess
-it's not that bad for me
->>> Why not?
-Why not?
->>> I have no arms
-Why not?
->>> Yes you do
-You are right
->>> Goodbye
-Goodbye
->>> RESET
+2019-07-11 07:00:35 mjcdesktop interact.py[19521] INFO Selected personality: singularity
+robot: This is the future, all these stupid people are going to take this seriously
+human: Fake news right, it will be everywhere. We need to learn new norms as a society.
+robot: It's not about ethics in journalism. It's about ethics in politics and the media.
+human: And as consumers too.
+robot: I hope that's not too late.
+human: Well we're not dead. It took people a while to adjust to the printing press. We mainly consilidated newspapers into a few big ones the government could have a relationship with. So all aboard facebook & google I guess.
+robot: I would say it's more like they're trying to make an issue of consumer vs media. 
+human: Yeah I see what you mean, which one is at faul for the degrading quality of news.
+robot: We don't need to fear the media. We need to be afraid of the people.
+human: I'm agraid of everyone so it's all g.
 --------------------------------------------------------------------------------
-INFO:interact.py:Selected personality: funny
-Please don't know, I think he said the same thing.
->>> That's what she said
-It’s not. 
->>> Your momma
-I've never seen that.
->>> Seen what?
-Nothing.
->>> Goodbye
-I love it.
->>> RESET
+2019-07-11 06:58:37 mjcdesktop interact.py[19521] INFO Selected personality: /r/copypasta
+human: Hi I'm a Navy Seal
+robot: I'm a Marine. I've been a Marine for 11 years.
+human: 11 years that's longer than I've been alive.
+robot: You're a Marine too.
+human: Great, :) we are all marines on this blessed day
+robot: &gt;11 years that's longer than I've been alive.
 --------------------------------------------------------------------------------
-INFO:interact.py:Selected personality: theonion
-Yes.
->>> Breaking news and onion was tried last yesterday by the news bear
-Yes.
->>> 
-Prompt should not be empty!
->>> .
-Yes.
->>> Go on
-Yes.
->>> Why?
-Because we haven't seen it yet
->>> Ok cool, good for you
-```
-
-Restricting to longer comments:
-
-```
-INFO:interact.py:Namespace(dataset_cache='./dataset_cache', dataset_path='./data/reddit_threads', device='cpu', max_history=6, max_length=20, min_length=1, model='gpt2', model_checkpoint='runs/Jul10_06-54-02_mjcdesktop/', no_sample=False, seed=42, temperature=0.7, top_k=0, top_p=0.9)
-INFO:interact.py:Selected personality: totallynotrobots
->>> Hi how is it human
-No this is so funny. 
->>> With this latest run I'm hoping you can do longer comments?
-Wow, what a memorable run. 
->>> What made it memorable, and do you mean a run like a bipedal mammal, or run like a evil ROBOT?
-I thought I was in for a ride
->>> Ride or run? Bipedal mammal humans such as I often use our legs to run. But robot perhaps RIDE???
-Wow, that’s a real horse
->>> Yes I am a biological organism but I am not an equine, I am a hemoglobin blooded human animal
-Oh, you're so real!
->>> Yes I'm glad you noticed that :)
-Wow, that’s a real horse
->>> No I said I'm NOT A HORSE
-I’m a hemoglobin blooded human animal. 
->>> RESET
---------------------------------------------------------------------------------
-INFO:interact.py:Selected personality: psychonauts
-The half-truth is that the only thing I was conscious of was my brain. 
->>> Perhaps that's just because you body was numb. What was the whole-truth?
-Wow, your brain is a good one
->>> Yeah thanks dude
-I just think you're an idiot, you're a stupid cunt and a stupid human.
->>> *think's
-[deleted]
-I'm sorry, I'm sorry, I'm sorry I'm sorry
->>> [deleted]
-I'm sorry, I'm sorry I'm sorry
+2019-07-11 07:10:53 mjcdesktop interact.py[19521] INFO Selected personality: totallynotrobots
+robot: That's exactly what I thought. 
+human: I THOUGHT YOU HUMAN
+robot: I WAS SCREAMING FELLOW HUMAN
+human: AH I SEE, WE HUMANS LIKE TO SCREAM
+robot: WE HUMANS LIKE TO SHOUT!
+human: YES WE DO, WITH OUR MOUTHS MADE OF MEAT
+robot: HA HA HA HA HA HA HA HA HA HA HA HA HA HA
+human: HA HA HA AH AH AAAAAAAA
+robot: HA HA HA HA HA HA HA
+human: AAHHHHHHHHHHhh
+robot: HA HA HA HA HA HA HA
+human: SCREANING IWTH MY HUMAN MOUTH
+robot: IT'S ALL YOU NEED TO DO TO GET IT TO LOOK GOOD
+human: /scream mode off
+robot: I'M SCREAMING, HUMAN! I AM SCREAMING!
+human: I am no longer screaming
+robot: I WAS SCREAMING FELLOW HUMAN
+human: Thanks you for the good human interaction fello human
+robot: THAT IS WHAT I MEANT TO DO TO FELLOW HUMAN
+human: As did I, other mammal
+robot: I AM NOT SCREAMING FELLOW HUMAN
+human: You are still screaming, you must push less air through your human lungs when you creat sounds
+robot: You are still screaming, you must push more air through your human lungs
+human: No, no less
+robot: HEY HUMAN, I WAS SCREAMING FELLOW HUMAN. I WAS SCREAMING
+human: And you still are, check your human logic loop, it may be circular
+robot: I AM SCREAMING FELLOW HUMAN. I WAS SCREAMING FELLOW HUMAN.
+human: Correct, thank you. We humans should always be correct
 ```
 
 ## TODO:
@@ -101,11 +73,12 @@ I'm sorry, I'm sorry I'm sorry
   - [x] Without username
   - [x] Remove [deleted]
   - [x] Remove short comments
+  - [x] remove mod comments
   - [ ] Restrict to specific subreddit
-  - [ ] Try GPT2 medium on colab
+  - [ ] Try GPT2 medium on colab (wait for pytorch+TPU)
 - [ ] Data
   - [ ] Scrape to one big file, perhaps sqllite or jsonl
-- [ ] Deploy: if good interact with it on IRC
+- [ ] Deploy: if good results, interact with it on IRC
 
 
 ## Errors:
