@@ -81,7 +81,7 @@ def get_dataset(tokenizer, data_path):
         subreddit_files = sorted(subreddit_path.glob("*.pickle"))
         if len(subreddit_files)>10:
             subreddit = subreddit_path.name
-            print(split, len(subreddit_files), subreddit)
+            print(len(subreddit_files), subreddit)
 
             # split
             train_files, test_files = train_test_split(
