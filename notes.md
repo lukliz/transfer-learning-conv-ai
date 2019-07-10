@@ -51,10 +51,111 @@ INFO:train.py:Valid dataset (Batch, Candidates, Seq length): torch.Size([2, 3, 1
 
 `python interact.py --device cpu --dataset_path ./data/reddit_threads --model_checkpoint runs/Jul09_15-44-47_mjcdesktop/`
 
-python interact.py  --model_checkpoint runs/Jul09_16-45-02_mjcdesktop --device cpu --dataset_path ./data/reddit_threads
+python interact.py --dataset_path ./data/reddit_threads --model_checkpoint runs/Jul09_21-25-16_mjcdesktop
 
 
 train.py --dataset_path ./data/reddit_threads --fp16 O2 --gradient_accumulation_steps 32 --train_batch_size 1 --valid_batch_size 1 --n_epochs 100
 
 
-- Trying with no authors, with 1-3 candidates (most are 1 naturally so we shall see). And with longer history
+- Trying with no authors, with 1-3 candidates (most are 1 naturally so we shall see). And with longer history. It learn to say "no u r"
+```
+>>> That's a cute kitty                                                                                                                                                                                                                                                        
+No u                                                                                                                                                                                                                                                                           
+>>> Haha thanks, I'm not cute in real life though                                                                                                                                                                                                                              
+You're right, I'm pretty sure that's not the case.                                                                                                                                                                                                                             
+>>> Thanks :(
+No u
+>>> Yeah I get it
+Yes, but you're wrong.
+>>> No u
+Haha
+>>> No u
+Haha
+>>> No u
+Haha
+>>> No u
+No u
+>>> No u
+No u
+>>> No u
+No u
+>>> No u
+No u
+>>> No u
+No u
+>>> No u^[OM
+No u
+>>> Yes I
+No u
+>>> Your momma was a truck driver from the moon
+Yes, my momma was a truck driver from the moon
+>>> But wait
+No u
+>>> for it
+No u
+>>> Your father was a bus boy to the stars
+No u
+>>> And yuour a silly sod
+No u
+>>> From space
+No u
+>>> And you suck
+No u
+>>> haha
+No u
+>>> q
+No u
+```
+
+```
+Goodbye
+>>> RESET
+--------------------------------------------------------------------------------
+INFO:interact.py:Selected personality: shittyaskscience
+#r/lostredditors
+>>> Yeah I guess
+it's not that bad for me
+>>> Why not?
+Why not?
+>>> I have no arms
+Why not?
+>>> Yes you do
+You are right
+>>> Goodbye
+Goodbye
+>>> RESET
+--------------------------------------------------------------------------------
+INFO:interact.py:Selected personality: funny
+Please don't know, I think he said the same thing.
+>>> That's what she said
+It’s not. 
+>>> Your momma
+I've never seen that.
+>>> Seen what?
+Nothing.
+>>> Goodbye
+I love it.
+>>> RESET
+--------------------------------------------------------------------------------
+INFO:interact.py:Selected personality: theonion
+Yes.
+>>> Breaking news and onion was tried last yesterday by the news bear
+Yes.
+>>> 
+Prompt should not be empty!
+>>> .
+Yes.
+>>> Go on
+Yes.
+>>> Why?
+Because we haven't seen it yet
+>>> Ok cool, good for you
+```
+
+- But it seems to learn small repetitive replies. I also have a lot of data that way, perhaps I should restrict to long replies, karma, or 3 replies
+- We could also try the MEDIUM model on colab, and to restrict to one subreddit
+
+
+TODO:
+- [ ] Show how it works each epoch
+- [ ] Try GPT-2 medium on colab

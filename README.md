@@ -1,3 +1,77 @@
+This repo uses reddit data from pushshift.io to create a chat bot. It's like the [uggingface/transfer-learning-conv-ai](https://github.com/huggingface/transfer-learning-conv-ai)  repo it was forked from, but the personalities are subreddits, the history are the previous comments, and utterances are from reddit comments. 
+
+## Running
+
+- clone the repo `git clone https://github.com/wassname/transfer-learning-conv-ai.git`
+- get data with `fetch_pushshift_data.py` (run overnight)
+- with a 2080 ti you can run with `python train.py --dataset_path ./data/reddit_threads --fp16 O2 --gradient_accumulation_steps 32 --train_batch_size 1 --valid_batch_size 1 --n_epochs 3`
+- interact with `python interact.py --device cpu --dataset_path ./data/reddit_threads --model_checkpoint runs/Jul09_15-44-47_mjcdesktop/`
+
+If you want me to share a dataset and pretrained model, just ask.
+
+## Current results
+
+```
+Goodbye
+>>> RESET
+--------------------------------------------------------------------------------
+INFO:interact.py:Selected personality: shittyaskscience
+#r/lostredditors
+>>> Yeah I guess
+it's not that bad for me
+>>> Why not?
+Why not?
+>>> I have no arms
+Why not?
+>>> Yes you do
+You are right
+>>> Goodbye
+Goodbye
+>>> RESET
+--------------------------------------------------------------------------------
+INFO:interact.py:Selected personality: funny
+Please don't know, I think he said the same thing.
+>>> That's what she said
+It’s not. 
+>>> Your momma
+I've never seen that.
+>>> Seen what?
+Nothing.
+>>> Goodbye
+I love it.
+>>> RESET
+--------------------------------------------------------------------------------
+INFO:interact.py:Selected personality: theonion
+Yes.
+>>> Breaking news and onion was tried last yesterday by the news bear
+Yes.
+>>> 
+Prompt should not be empty!
+>>> .
+Yes.
+>>> Go on
+Yes.
+>>> Why?
+Because we haven't seen it yet
+>>> Ok cool, good for you
+```
+
+## TODO:
+
+- [ ] Get better results
+  - [x] Without username
+  - [x] Remove [deleted]
+  - [x] Remove short comments
+  - [ ] Restrict to specific subreddit
+  - [ ] Try GPT2 medium on colab
+- [ ] Data
+  - [ ] Scrape to one big file, perhaps sqllite or jsonl
+- [ ] Deploy: if good interact with it on IRC
+
+-----
+
+Forked from
+
 # 🦄 Building a State-of-the-Art Conversational AI with Transfer Learning
 
 The present repo contains the code accompanying the blog post [🦄 How to build a State-of-the-Art Conversational AI with Transfer Learning](https://medium.com/@Thomwolf/how-to-build-a-state-of-the-art-conversational-ai-with-transfer-learning-2d818ac26313).
