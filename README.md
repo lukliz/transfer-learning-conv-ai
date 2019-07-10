@@ -9,7 +9,7 @@ This repo uses reddit data from pushshift.io to create a chat bot. It's like the
 - with a nvidia 2080 ti you can run with `python train.py --dataset_path ./data/reddit_threads --fp16 O2 --gradient_accumulation_steps 32 --train_batch_size 1 --valid_batch_size 1 --n_epochs 3`
 - interact with `python interact.py --device cpu --dataset_path ./data/reddit_threads --model_checkpoint runs/Jul09_15-44-47_mjcdesktop/`
 
-If you want me to share a dataset and pretrained model, just ask.
+If you want me to share the dataset and a pretrained model, just ask in the issues. I'm hesitant to do the work to share it if no one wants it.
 
 ## Current results
 
