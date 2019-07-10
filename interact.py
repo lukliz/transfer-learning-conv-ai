@@ -130,10 +130,10 @@ def run():
 
     history = []
     while True:
-        raw_text = input(f"{fg(1)}>>> {attr(0)}")
+        raw_text = input(f"{fg(1)}human: {attr(0)}")
         while not raw_text:
             print('Prompt should not be empty!')
-            raw_text = input(f"{fg(1)}>>> {attr(0)}")
+            raw_text = input(f"{fg(1)}human: {attr(0)}")
         history.append(tokenizer.encode(raw_text))
 
         if raw_text == 'RESET':
@@ -142,13 +142,12 @@ def run():
             personality = random.choice(personalities)
             logger.info("Selected personality: %s", tokenizer.decode(chain(*personality)))
 
-        
         with torch.no_grad():
             out_ids = sample_sequence(personality, history, tokenizer, model, args)
         history.append(out_ids)
         history = history[-(2*args.max_history+1):]
         out_text = tokenizer.decode(out_ids, skip_special_tokens=True)
-        print(f'{fg(17)}{out_text}{attr(0)}')
+        print(f'{fg(17)}robot: {out_text}{attr(0)}')
 
 
 if __name__ == "__main__":
