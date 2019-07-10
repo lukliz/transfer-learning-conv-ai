@@ -1,4 +1,4 @@
-This repo uses reddit data from pushshift.io to create a chat bot. It's like the [uggingface/transfer-learning-conv-ai](https://github.com/huggingface/transfer-learning-conv-ai)  repo it was forked from, but the personalities are subreddits, the history are the previous comments, and utterances are from reddit comments. 
+This repo uses reddit data from pushshift.io to create a chat bot. It's like the [huggingface/transfer-learning-conv-ai](https://github.com/huggingface/transfer-learning-conv-ai)  repo it was forked from, but the personalities are subreddits, the history are the previous comments, and utterances are from reddit comments. 
 
 ## Running
 
@@ -12,6 +12,8 @@ This repo uses reddit data from pushshift.io to create a chat bot. It's like the
 If you want me to share the dataset and a pretrained model, just ask in the issues. I'm hesitant to do the work to share it if no one wants it.
 
 ## Current results
+
+Are poor (see TODO below for ideas)
 
 ```
 Goodbye
