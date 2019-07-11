@@ -108,31 +108,31 @@ parser.add_argument(
     type=str,
     action="append",
     default=[
-        "aww",
-        "funny",
-        "jokes",
-        "art",
-        "programmingcirclejerk",
-        "futurology",
-        "theonion",
-        "upliftingnews",
-        "news",
-        "bruhmoment",
-        "moviescirclejerk",
-        "copypasta",
-        "emojipasta",
-        "nosleep",
-        "rareinsults",
-        "psychonauts",
-        "squaredcircle",
-        "whowouldwin",
-        "Scotland",
-        "singularity",
-        "roast_me",
-        "RoastMe",
-        "OldieRoast",
-        "ScenesFromAHat",
-        "Showerthoughts"
+        # "aww",
+        # "funny",
+        # "jokes",
+        # "art",
+        # "programmingcirclejerk",
+        # "futurology",
+        # "theonion",
+        # "upliftingnews",
+        # "news",
+        # "bruhmoment",
+        # "moviescirclejerk",
+        # "copypasta",
+        # "emojipasta",
+        # "nosleep",
+        # "rareinsults",
+        # "psychonauts",
+        # "squaredcircle",
+        # "whowouldwin",
+        # "Scotland",
+        # "singularity",
+        # "roast_me",
+        # "RoastMe",
+        # "OldieRoast",
+        # "ScenesFromAHat",
+        # "Showerthoughts"
 
     ],
     help="Subreddit names to scrape e.g. ' - s aww - s news '",
@@ -146,6 +146,7 @@ parser.add_argument(
 )
 
 args = parser.parse_args()
+print(args)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__file__)
@@ -236,22 +237,20 @@ def comment_praw2psaw(comment_praw):
 
 
 random.shuffle(args.subreddit)
-for subreddit in tqdm(args.subreddit, unit="subreddit"):
+for subreddit in args.subreddit:
     try:
-        print(subreddit)
+        # print(subreddit)
 
         # Since the api often only returns 1000, lets query in monthly intervals
         dates = pd.date_range("2018", "2019", freq="3M")
         date_bins = list(zip(dates[:-1], dates[1:]))
         random.shuffle(date_bins)
-
         with tqdm(
             desc=subreddit, unit="submission", total=args.number_of_threads
         ) as prog:
-            print(subreddit)
 
             for after, before in date_bins:
-                logger.info(
+                logger.debug(
                     "%s",
                     dict(
                         subreddit=subreddit,
@@ -296,49 +295,53 @@ for subreddit in tqdm(args.subreddit, unit="subreddit"):
                         )
                         comment_dict = collections.defaultdict(list)
 
-                        # Use psaw
-                        try:
-                            
-                            comments = api.search_comments(ids=submission_comment_ids)
-                            # It will just repeat unless we set a limit
-                            comments = [
-                                next(comments)
-                                for _ in tqdm(
-                                    range(submission["num_comments"]),
-                                    leave=False,
-                                    unit="comment",
+                        # Batch to avoid 414: Url too long
+                        batch_size= 200
+                        for i in range(0, len(submission_comment_ids), batch_size):
+                            batch_ids = submission_comment_ids[i:i+batch_size]
+
+                            # Use psaw
+                            try:                                
+                                comments = api.search_comments(ids=batch_ids)
+                                # It will just repeat unless we set a limit
+                                comments = [
+                                    next(comments)
+                                    for _ in tqdm(
+                                        range(submission["num_comments"]),
+                                        leave=False,
+                                        unit="comment",
+                                    )
+                                ]
+                                # Or praw... nah slow
+                                #             comments = [comment_praw2psaw(reddit.comment(id).refresh()) for id in submission_comment_ids]
+                                for comment in comments:
+                                    comment = psaw_to_dict(comment)
+                                    comment_dict[comment["parent_id"]].append(comment)
+
+                                # sort by karma, if available
+                                for key in comment_dict.keys():
+                                    comment_dict[key].sort(
+                                        key=lambda x: x.get("score", 0), reverse=True
+                                    )
+
+                                # pickle so we will have original data if wanted, that way we can make changes to input data formatting
+                                out_pkl = out_dir.joinpath(submission_id + ".pickle")
+                                pickle.dump(
+                                    dict(submission=submission, comment_dict=comment_dict),
+                                    out_pkl.open("wb"),
                                 )
-                            ]
-                            # Or praw... nah slow
-                            #             comments = [comment_praw2psaw(reddit.comment(id).refresh()) for id in submission_comment_ids]
-                            for comment in comments:
-                                comment = psaw_to_dict(comment)
-                                comment_dict[comment["parent_id"]].append(comment)
+                                logger.debug("writing pickle %s", out_pkl)
 
-                            # sort by karma, if available
-                            for key in comment_dict.keys():
-                                comment_dict[key].sort(
-                                    key=lambda x: x.get("score", 0), reverse=True
-                                )
+                                # format
+                                # text = format_comments_dict(comment_dict, submission)
 
-                            # pickle so we will have original data if wanted, that way we can make changes to input data formatting
-                            out_pkl = out_dir.joinpath(submission_id + ".pickle")
-                            pickle.dump(
-                                dict(submission=submission, comment_dict=comment_dict),
-                                out_pkl.open("wb"),
-                            )
-                            logger.debug("writing pickle %s", out_pkl)
-
-                            # format
-                            # text = format_comments_dict(comment_dict, submission)
-
-                            # # write out thread
-                            # out_file.write_text(text)
-                        except Exception as e:
-                            logger.warn(f"Exception {e}, for subreddit={subreddit}, submission_id={submission['id']} submission_comment_ids={submission_comment_ids} after={after} before={before}")
-                        prog.update(1)
+                                # # write out thread
+                                # out_file.write_text(text)
+                            except Exception as e:
+                                logger.warning(f"Exception {e}, for subreddit={subreddit}, submission_id={submission['id']} submission_comment_ids={len(submission_comment_ids)} after={after} before={before}")
+                            prog.update(1)
                     else:
                         logger.debug("skipping existing file %s", out_file)
                         prog.update(1)
     except Exception as e:
-        logger.warn(e)
+        logger.warning(e)
