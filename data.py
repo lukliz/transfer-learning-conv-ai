@@ -14,7 +14,7 @@ from pathlib import Path
 logger = logging.getLogger(__file__)
 
 
-def format_thing(thing, submission_id):
+def format_reddit_thing(thing, submission_id):
     if thing["type"] == "submission":
         return "\n".join(
             [thing["title"], thing.get("selftext", "")]
@@ -58,7 +58,7 @@ def thread2tree(comment_dict, submission):
     return nodes_by_id, thing_by_id
 
 
-def get_dataset(tokenizer, data_path, min_candidates=1, max_candidates = 3):
+def get_dataset(tokenizer, data_path, num_candidates = 3, subreddits=[]):
     """
     Load pickle files with reddit comments.
 
@@ -81,19 +81,24 @@ def get_dataset(tokenizer, data_path, min_candidates=1, max_candidates = 3):
         subreddit_files = sorted(subreddit_path.glob("*.pickle"))
         if len(subreddit_files)>10:
             subreddit = subreddit_path.name
-            print(f'{len(subreddit_files):10d} threads from /r/{subreddit}')
+            if (subreddits == []) or (subreddit in subreddits):
+                print(f'{len(subreddit_files):10d} threads from /r/{subreddit}')
 
-            # split
-            train_files, test_files = train_test_split(
-                subreddit_files, test_size=0.1, random_state=42
-            )
-            train_files, valid_files = train_test_split(
-                train_files, test_size=0.1, random_state=42
-            )
+                # split
+                train_files, test_files = train_test_split(
+                    subreddit_files, test_size=0.1, random_state=42
+                )
+                train_files, valid_files = train_test_split(
+                    train_files, test_size=0.1, random_state=42
+                )
 
-            splits["train"][subreddit] = train_files
-            splits["valid"][subreddit] = valid_files
-            splits["test"][subreddit] = test_files
+                splits["train"][subreddit] = train_files
+                splits["valid"][subreddit] = valid_files
+                splits["test"][subreddit] = test_files
+    
+    num_train_examples = len(list(itertools.chain(*list(splits["train"].values()))))
+    if len(splits["train"])==0 or num_train_examples< 10:
+        raise Exception("not enougth training data found. Check your dataset_path and your --subreddits argument")
 
     # collect data into the same dict format as hugging face
     dataset2 = collections.defaultdict(list)
@@ -122,64 +127,65 @@ def get_dataset(tokenizer, data_path, min_candidates=1, max_candidates = 3):
                         if (
                             current_node.parent
                             and len(current_node.path) > 1
-                            and len(current_node.children) >= min_candidates
+                            and len(current_node.children) >= 1
                         ):
                             history = [
-                                format_thing(thing_by_id[node.name], submission_id)
+                                format_reddit_thing(thing_by_id[node.name], submission_id)
                                 for node in current_node.path
                             ]
-
-                            candidates = [
+                            
+                            replies = [
                                 thing_by_id[node.name] for node in current_node.children
                             ]
 
-                            # Filter some of the bad data out
-                            candidates = filter(
+                            # We now want to find distractors. None of these ID's will do
+                            correct_ids = [node.name for node in current_node.path] + [submission_id] + [node.name for node in current_node.children]
+                            distractor_ids = [k for k, v in nodes_by_id.items() if k not in correct_ids]
+                            distractors = [thing_by_id[d_id] for d_id in distractor_ids]
+
+                            # Filter some of the bad data out, yeah it's a hack, but some is very usefull
+                            filters = [
+                                lambda x: "[deleted]" not in x.get("body", ""),
+                                lambda x: "[removed]" not in x.get("body", ""),
+                                lambda x: x.get("author", "") != "[removed]",
+                                # Filter out the repetative mod and sticky comments
                                 lambda x: x.get("author", "") != "AutoModerator",
-                                candidates,
-                            )
-                            candidates = filter(
-                                lambda x: x.get("author", "") != "[removed]", candidates
-                            )
-                            candidates = filter(
-                                lambda x: "[deleted]" not in x.get("body", ""), candidates
-                            )
-                            candidates = filter(
-                                lambda x: "[removed]" not in x.get("body", ""), candidates
-                            )
-                            candidates = filter(
-                                lambda x: len(x.get("body", "")) > 50, candidates
-                            )
-                            candidates = filter(
-                                lambda x: not x.get("stickied", False), candidates
-                            )
-                            candidates = [
-                                format_thing(thing, submission_id)
-                                for thing in candidates
+                                lambda x: not x.get("stickied", False),
+                                # Short comments are low information and too easy
+                                lambda x: len(x.get("body", "")) > 50,
                             ]
-                            if len(candidates) < 1:
-                                continue
+                            # TODO try filtering out replies that overlap too much with history. This avoid repitative qouting and answers
+                            for f in filters:
+                                replies = filter(f, replies)
+                                distractors = filter(f, distractors)
 
-                            # We want to have a max number of candidates so we don't run out of GPU mem. Extra ones go into a new entry
-                            for k in range(0, len(candidates), max_candidates):
-                                batch_candidates = candidates[k:k + max_candidates]
+                            # Format "things" from reddit
+                            replies = [
+                                format_reddit_thing(thing, submission_id)
+                                for thing in replies
+                            ]
+                            distractors = [
+                                format_reddit_thing(thing, submission_id)
+                                for thing in distractors
+                            ]
+                            if (len(distractors) >= num_candidates-1):
+                                # Distractors at start of candidates, real reply at end
+                                for reply in replies:
+                                    candidates = random.sample(distractors, num_candidates - 1) + [reply]
 
-                                # Lets pad the sequence up to max candidates (is this needed?)
-                                batch_candidates = batch_candidates * max_candidates
-                                batch_candidates = batch_candidates[:max_candidates]
-
-                                utterance = dict(candidates=batch_candidates, history=history)
-                                utterances.append(utterance)
+                                    utterance = dict(candidates=candidates, history=history)
+                                    utterances.append(utterance)
 
                         else:
                             logger.debug("skipping node with too few paths")
                 dataset2[split].append(
                     dict(personality=[personality], utterances=utterances)
                 )
+                logger.info(f"Utterances for {split} & /r/{personality}: {len(utterances)}")
                 if split=='train' and random.random()<0.2:
                     logger.info("Example inputs for %s: %s", personality, utterance)
 
-    logger.info("Tokenize and encode the dataset")
+    logger.info("Tokenize and encode the dataset.")
 
     def tokenize(obj):
         if isinstance(obj, str):

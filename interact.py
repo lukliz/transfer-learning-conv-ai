@@ -129,6 +129,7 @@ def run():
     logger.info("Sample a personality")
     personalities = get_dataset_personalities(tokenizer, args.dataset_path, args.dataset_cache)
     personality = random.choice(personalities)
+    print(personalities, personality)
     logger.info("Selected personality: /r/%s", tokenizer.decode(chain(*personality)))
 
     history = []
@@ -143,7 +144,7 @@ def run():
             print('-'*80)
             history = []
             personality = random.choice(personalities)
-            logger.info("Selected personality: %s", tokenizer.decode(chain(*personality)))
+            logger.info("Selected personality: /r/%s", tokenizer.decode(chain(*personality)))
 
         with torch.no_grad():
             out_ids = sample_sequence(personality, history, tokenizer, model, args)

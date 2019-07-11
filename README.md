@@ -78,7 +78,8 @@ human: Correct, thank you. We humans should always be correct
   - [ ] Try GPT2 medium on colab (wait for pytorch+TPU)
 - [ ] Data
   - [ ] Scrape to one big file, perhaps sqllite or jsonl
-- [ ] Deploy: if good results, interact with it on IRC
+- [ ] Deploy: if good results,
+- [ ]  interact with it on IRC
 
 
 ## Errors:

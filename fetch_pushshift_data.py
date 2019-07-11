@@ -110,6 +110,7 @@ parser.add_argument(
     default=[
         "aww",
         "funny",
+        "jokes",
         "art",
         "programmingcirclejerk",
         "futurology",
@@ -247,6 +248,7 @@ for subreddit in tqdm(args.subreddit, unit="subreddit"):
         with tqdm(
             desc=subreddit, unit="submission", total=args.number_of_threads
         ) as prog:
+            print(subreddit)
 
             for after, before in date_bins:
                 logger.info(
@@ -259,6 +261,17 @@ for subreddit in tqdm(args.subreddit, unit="subreddit"):
                         sort_type="num_comments",
                     ),
                 )
+
+                # Maybe check name is right, and how many threads
+                # agg = api.search_submissions(
+                #     subreddit=subreddit,
+                #     num_comments=">10",
+                #     after=after,
+                #     before=before,
+                #     sort_type="num_comments",
+                #     agg="subreddit"
+                # )
+
                 submissions = api.search_submissions(
                     subreddit=subreddit,
                     num_comments=">10",
@@ -322,7 +335,7 @@ for subreddit in tqdm(args.subreddit, unit="subreddit"):
                             # # write out thread
                             # out_file.write_text(text)
                         except Exception as e:
-                            logger.warn(e)
+                            logger.warn(f"Exception {e}, for subreddit={subreddit}, submission_id={submission["id"]} submission_comment_ids={submission_comment_ids} after={after} before={before}")
                         prog.update(1)
                     else:
                         logger.debug("skipping existing file %s", out_file)
