@@ -335,7 +335,7 @@ for subreddit in tqdm(args.subreddit, unit="subreddit"):
                             # # write out thread
                             # out_file.write_text(text)
                         except Exception as e:
-                            logger.warn(f"Exception {e}, for subreddit={subreddit}, submission_id={submission["id"]} submission_comment_ids={submission_comment_ids} after={after} before={before}")
+                            logger.warn(f"Exception {e}, for subreddit={subreddit}, submission_id={submission['id']} submission_comment_ids={submission_comment_ids} after={after} before={before}")
                         prog.update(1)
                     else:
                         logger.debug("skipping existing file %s", out_file)

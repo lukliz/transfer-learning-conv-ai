@@ -58,7 +58,7 @@ def thread2tree(comment_dict, submission):
     return nodes_by_id, thing_by_id
 
 
-def get_dataset(tokenizer, data_path, num_candidates = 3, subreddits=[]):
+def get_dataset(tokenizer, data_path, num_candidates = 3, subreddits=[], max_seq_len=None):
     """
     Load pickle files with reddit comments.
 
@@ -95,6 +95,8 @@ def get_dataset(tokenizer, data_path, num_candidates = 3, subreddits=[]):
                 splits["train"][subreddit] = train_files
                 splits["valid"][subreddit] = valid_files
                 splits["test"][subreddit] = test_files
+            else:
+                print(f'subreddit not in filter /r/{subreddit}')
     
     num_train_examples = len(list(itertools.chain(*list(splits["train"].values()))))
     if len(splits["train"])==0 or num_train_examples< 10:
@@ -187,10 +189,11 @@ def get_dataset(tokenizer, data_path, num_candidates = 3, subreddits=[]):
 
     logger.info("Tokenize and encode the dataset.")
 
+    max_seq_len = max_seq_len or tokenizer.max_len
     def tokenize(obj):
         if isinstance(obj, str):
             return tokenizer.convert_tokens_to_ids(
-                tokenizer.tokenize(obj)[: tokenizer.max_len]
+                tokenizer.tokenize(obj)[:max_seq_len]
             )
         if isinstance(obj, dict):
             return dict((n, tokenize(o)) for n, o in obj.items())

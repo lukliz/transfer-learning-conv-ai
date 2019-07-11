@@ -135,7 +135,8 @@ def get_data_loaders(args, tokenizer):
         tokenizer,
         args.dataset_path,
         num_candidates=args.num_candidates,
-        subreddits=args.subreddit
+        subreddits=args.subreddit,
+        max_seq_len=args.max_seq_len
     )
 
     logger.info("Build inputs and labels")
@@ -160,7 +161,7 @@ def get_data_loaders(args, tokenizer):
                         #  used for the classification part of the dual language model
                         lm_labels = bool(j == num_candidates - 1)
                         instance, _ = build_input_from_segments(
-                            persona, history, candidate, tokenizer, lm_labels, max_len=args.seq_max_len
+                            persona, history, candidate, tokenizer, lm_labels, max_len=args.max_seq_len
                         )
                         for input_name, input_array in instance.items():
                             datasets[dataset_name][input_name].append(input_array)
@@ -247,7 +248,7 @@ def train():
     parser.add_argument(
         "--max_history",
         type=int,
-        default=6,
+        default=4,
         help="Number of previous exchanges to keep in history",
     )
     parser.add_argument(
@@ -305,7 +306,7 @@ def train():
         help="Local rank for distributed training (-1: not distributed)",
     )
     parser.add_argument(
-        "--seq_max_len",
+        "--max_seq_len",
         type=int,
         default=None,
         help="Max length size",
