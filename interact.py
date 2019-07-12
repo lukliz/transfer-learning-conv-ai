@@ -3,6 +3,7 @@
 # This source code is licensed under the BSD-style license found in the
 # LICENSE file in the root directory of this source tree.
 import logging
+import os
 import random
 from argparse import ArgumentParser
 from itertools import chain
@@ -127,9 +128,15 @@ def run():
     model.eval()
 
     logger.info("Sample a personality")
-    personalities = get_dataset_personalities(tokenizer, args.dataset_path, args.dataset_cache)
+    training_args = torch.load(open(os.path.join(args.model_checkpoint, 'model_training_args.bin'), 'rb'))
+    personalities_str = getattr(training_args, "subreddit", [])
+    personalities = [tokenizer.convert_tokens_to_ids(tokenizer.tokenize(obj)) for obj in personalities_str]
+    if personalities:
+        logger.info("Loaded personalities from model_training_args.bin %s", personalities_str)
+    else:
+        personalities = get_dataset_personalities(tokenizer, args.dataset_path, args.dataset_cache)
     personality = random.choice(personalities)
-    print(personalities, personality)
+    print('personalities', [tokenizer.decode(chain(*p)) for p in personalities])
     logger.info("Selected personality: /r/%s", tokenizer.decode(chain(*personality)))
 
     history = []
