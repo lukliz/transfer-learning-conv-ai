@@ -248,7 +248,7 @@ def train():
     parser.add_argument(
         "--max_history",
         type=int,
-        default=4,
+        default=6,
         help="Number of previous exchanges to keep in history",
     )
     parser.add_argument(
@@ -444,6 +444,7 @@ def train():
             output_transform=lambda x: (x[0][0], x[1][0]),
         ),
         "accuracy": Accuracy(output_transform=lambda x: (x[0][1], x[1][1])),
+        # "accuracy": Accuracy(output_transform=lambda x: (torch.sigmoid(x[0][1].float()).round(), x[1][1])),
     }
     metrics.update(
         {

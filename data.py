@@ -1,6 +1,7 @@
 import collections
 import random
 import copy
+import re
 import itertools
 import pickle
 from pathlib import Path
@@ -160,6 +161,10 @@ def get_dataset(tokenizer, data_path, num_candidates = 3, subreddits=[], max_seq
                             for f in filters:
                                 replies = filter(f, replies)
                                 distractors = filter(f, distractors)
+
+                            # also removed qouted text
+                            replies = [re.sub('&gt;.*\n', '', r) for r in replies]
+                            distractors = [re.sub('&gt;.*\n', '', r) for r in distractors]
 
                             # Format "things" from reddit
                             replies = [

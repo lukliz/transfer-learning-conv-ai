@@ -74,12 +74,14 @@ human: Correct, thank you. We humans should always be correct
   - [x] Remove [deleted]
   - [x] Remove short comments
   - [x] remove mod comments
+  - [x] fix distractors
+  - [ ] prevent qouting and repetative data
   - [ ] Restrict to specific subreddit
   - [ ] Try GPT2 medium on colab (wait for pytorch+TPU)
 - [ ] Data
   - [ ] Scrape to one big file, perhaps sqllite or jsonl
 - [ ] Deploy: if good results,
-- [ ]  interact with it on IRC
+  - [ ] interact with it on IRC/slack
 
 
 ## Errors:

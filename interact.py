@@ -130,7 +130,7 @@ def run():
     logger.info("Sample a personality")
     training_args = torch.load(open(os.path.join(args.model_checkpoint, 'model_training_args.bin'), 'rb'))
     personalities_str = getattr(training_args, "subreddit", [])
-    personalities = [tokenizer.convert_tokens_to_ids(tokenizer.tokenize(obj)) for obj in personalities_str]
+    personalities = [[tokenizer.convert_tokens_to_ids(tokenizer.tokenize(obj))] for obj in personalities_str]
     if personalities:
         logger.info("Loaded personalities from model_training_args.bin %s", personalities_str)
     else:

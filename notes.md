@@ -542,3 +542,33 @@ human: Yup
 robot: Minecraft is definitely a surprise.
 human: RESET
 ```
+
+
+# 20190712
+
+- Need to prevent loops
+  - sampling hacks
+  - removing qoutes
+  - perhaps make sure candidates are not overlapping much with history
+- Train on just one personality
+- 7 epochs is still improving in VAL
+
+
+```
+Namespace(dataset_cache='./dataset_cache', dataset_path='./data/reddit_threads', device='cpu', max_history=6, max_length=20, min_length=1, model='gpt2', model_checkpoint='runs/Jul12_07-39-52_mjcdesktop', no_sample=False, seed=None, temperature=0.7, top_k=0, top_p=0.9)
+
+2019-07-12 18:59:34 mjcdesktop interact.py[26836] INFO Selected personality: /r/rare_insults
+human: Hello robot
+robot: Wow, I saw this one before.  I'm sure it was *very* funny.
+human: Wait for it. Knock knock, who's there?
+robot: You know the one that gets you to say "hey, the robot made me laugh" or "
+human: A robot, who made me laught. Wait...
+robot: Wait, what kind of robot is that? I'm not sure, but I'm sure I'll
+human: It a rare_insults robot, made with GPT-2. In other words you. And you'll what?
+robot: That's all you got. And you'll be the one who made the joke. 
+human: Well, sure I guess I did make the joke. Do you have a point to make?
+robot: What kind of robot is that? I have no idea, but I'll let you know when I
+human: go on...
+robot: I had a point about the joke, but I was wrong, it was a very new one.
+
+```
