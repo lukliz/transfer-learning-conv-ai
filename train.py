@@ -93,6 +93,8 @@ def build_input_from_segments(
     if max_len is None:
         max_len = tokenizer.max_len
 
+    # First make sure history add up to max seq len, we do this seperatly so that history is cropped before reply
+    _truncate_seq_pair_n(history, int(tokenizer.max_len/3*2))
     instance = {}
     sequence = [list(chain(*persona))] + history + [reply]
 
@@ -125,7 +127,7 @@ def build_input_from_segments(
         logger.warn(
             f'input should be less than max len {len(instance["input_ids"])} < {tokenizer.max_len}'
         )
-    # assert len(instance["input_ids"]) < tokenizer.max_len, f'input should be less than max len {len(instance["input_ids"])} < {tokenizer.max_len}'
+    assert len(instance["input_ids"]) < tokenizer.max_len, f'input should be less than max len {len(instance["input_ids"])} < {tokenizer.max_len}'
     return instance, sequence
 
 
@@ -218,7 +220,7 @@ def get_data_loaders(args, tokenizer):
             valid_dataset.tensors[0].shape, len(valid_dataset)
         )
     )
-    assert train_dataset.tensors[0].shape[2]<tokenizer.max_len
+    assert train_dataset.tensors[0].shape[2] < tokenizer.max_len, 'sequences should be less than max len'
     return train_loader, valid_loader, train_sampler, valid_sampler
 
 
