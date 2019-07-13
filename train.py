@@ -127,7 +127,7 @@ def build_input_from_segments(
         logger.warn(
             f'input should be less than max len {len(instance["input_ids"])} < {tokenizer.max_len}'
         )
-    assert len(instance["input_ids"]) < tokenizer.max_len, f'input should be less than max len {len(instance["input_ids"])} < {tokenizer.max_len}'
+    assert len(instance["input_ids"]) <= tokenizer.max_len, f'input should be less than max len {len(instance["input_ids"])} < {tokenizer.max_len}'
     return instance, sequence
 
 
