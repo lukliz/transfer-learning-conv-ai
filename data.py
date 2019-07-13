@@ -103,7 +103,7 @@ def collect_thread_files(data_dir, subreddits):
     return splits
 
 
-def cache_load_utturances(cache_dir=tempfile.gettempdir(), ttl=360000):
+def cache_load_utturances(filename=".simple.cache", ttl=360000):
     """
     Decorator for wrapping simple cache around load_utterances.
 
@@ -114,7 +114,6 @@ def cache_load_utturances(cache_dir=tempfile.gettempdir(), ttl=360000):
         @simple_cache.wraps(func)
         def wrapper(**kwargs):
             # key = (args, tuple_kwargs(kwargs))
-            filename = Path(cache_dir).joinpath(f"{kwargs['personality']}.cache")
             tokenizer = kwargs["tokenizer"]
             # We must use immutaable, hashable args as keys, so no lists, sets, or tokenizer
             key = simple_cache.tuple_kwargs(
