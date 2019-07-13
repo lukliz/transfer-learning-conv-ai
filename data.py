@@ -132,7 +132,7 @@ def cache_load_utturances(filename="data/.simple.cache", ttl=360000):
                 value = func(**kwargs)
                 simple_cache.save_key(filename, key, value, ttl)
             else:
-                print("Loaded utturances from cache")
+                print(f'Loaded utturances from cache for {kwargs["personality"]}')
             return value
 
         return wrapper

@@ -94,7 +94,7 @@ def build_input_from_segments(
         max_len = tokenizer.max_len
 
     # First make sure history add up to max seq len, we do this seperatly so that history is cropped before reply
-    _truncate_seq_pair_n(history, int(max_len/3*2))
+    _truncate_seq_pair_n(history, int(max_len / 3 * 2))
     instance = {}
     sequence = [list(chain(*persona))] + history + [reply]
 
@@ -127,7 +127,9 @@ def build_input_from_segments(
         logger.warn(
             f'input should be less than max len {len(instance["input_ids"])} < {max_len}'
         )
-    assert len(instance["input_ids"]) <= max_len, f'input should be less than max len {len(instance["input_ids"])} < {max_len}'
+    assert (
+        len(instance["input_ids"]) <= max_len
+    ), f'input should be less than max len {len(instance["input_ids"])} < {max_len}'
     return instance, sequence
 
 
@@ -137,7 +139,7 @@ def get_data_loaders(args, tokenizer):
         tokenizer,
         args.dataset_path,
         subreddits=args.subreddit,
-        max_seq_len=args.max_seq_len
+        max_seq_len=args.max_seq_len,
     )
 
     logger.info("Build inputs and labels")
@@ -161,7 +163,12 @@ def get_data_loaders(args, tokenizer):
                     #  used for the classification part of the dual language model
                     lm_labels = bool(j == num_candidates - 1)
                     instance, _ = build_input_from_segments(
-                        persona, history, candidate, tokenizer, lm_labels, max_len=args.max_seq_len
+                        persona,
+                        history,
+                        candidate,
+                        tokenizer,
+                        lm_labels,
+                        max_len=args.max_seq_len,
                     )
                     for input_name, input_array in instance.items():
                         datasets[dataset_name][input_name].append(input_array)
@@ -220,7 +227,9 @@ def get_data_loaders(args, tokenizer):
             valid_dataset.tensors[0].shape, len(valid_dataset)
         )
     )
-    assert train_dataset.tensors[0].shape[2] <= args.max_seq_len, 'sequences should be less than max len'
+    assert (
+        train_dataset.tensors[0].shape[2] <= args.max_seq_len
+    ), "sequences should be less than max len"
     return train_loader, valid_loader, train_sampler, valid_sampler
 
 
@@ -232,7 +241,14 @@ def train():
         default="",
         help="Path or url of the dataset. If empty download from S3.",
     )
-    parser.add_argument("-s", "--subreddit", type=str, action="append", default=[], help="Limit the subreddits you train on")
+    parser.add_argument(
+        "-s",
+        "--subreddit",
+        type=str,
+        action="append",
+        default=[],
+        help="Limit the subreddits you train on",
+    )
     parser.add_argument(
         "--model_checkpoint",
         type=str,
@@ -324,9 +340,7 @@ def train():
         args.device = torch.device("cuda", args.local_rank)
         torch.distributed.init_process_group(backend="nccl", init_method="env://")
 
-    logger.info(
-        "Prepare tokenizer - add special tokens for fine-tuning"
-    )
+    logger.info("Prepare tokenizer - add special tokens for fine-tuning")
     tokenizer_class = (
         GPT2Tokenizer if "gpt2" in args.model_checkpoint else OpenAIGPTTokenizer
     )
@@ -440,8 +454,7 @@ def train():
             torch.nn.CrossEntropyLoss(ignore_index=-1),
             output_transform=lambda x: (x[0][0], x[1][0]),
         ),
-        "accuracy": Accuracy(output_transform=lambda x: (x[0][1], x[1][1])),
-        # "accuracy": Accuracy(output_transform=lambda x: (torch.sigmoid(x[0][1].float()).round(), x[1][1])),
+        "accuracy": Accuracy(output_transform=lambda x: (x[0][1], x[1][1]))
     }
     metrics.update(
         {
