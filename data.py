@@ -122,9 +122,14 @@ def threads_to_utterances(splits, num_candidates):
             for personality, files in personalities.items():
                 utterances = []
                 for file in files:
-                    # load
-                    thread = pickle.load(file.open("rb"))
                     prog.update(1)
+                    # load
+                    try:
+                        thread = pickle.load(file.open("rb"))
+                    except Exception as e:
+                        logger.warning(f"Exception opening {file}, {e}")
+                        file.unlink()
+                        continue
                     # Warning this seems to be slow of theads with lots of comments
                     if len(thread["comment_dict"]) > 100:
                         continue
@@ -134,7 +139,7 @@ def threads_to_utterances(splits, num_candidates):
                         )
                     except Exception as e:
                         logger.warn("Exception for file '%s', '%s'", file, e)
-                        # file.unlink()
+                        file.unlink()
                         continue
 
                     # get utterances
@@ -257,7 +262,9 @@ def get_dataset(
 def tokenize(obj, tokenizer, max_seq_len):
     """Recursively convert to tokens."""
     if isinstance(obj, str):
-        return tokenizer.convert_tokens_to_ids(tokenizer.tokenize(obj)[:max_seq_len])
+        toks = tokenizer.convert_tokens_to_ids(tokenizer.tokenize(obj)[:max_seq_len])
+        assert all([t < len(tokenizer.encoder) for t in toks]) # all(toks < len(tokenizer.encoder))
+        return toks
     if isinstance(obj, dict):
         return dict((n, tokenize(o, tokenizer, max_seq_len)) for n, o in obj.items())
     return list(tokenize(o, tokenizer, max_seq_len) for o in obj)
