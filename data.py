@@ -103,7 +103,7 @@ def collect_thread_files(data_dir, subreddits):
     return splits
 
 
-def cache_load_utturances(filename=".simple.cache", ttl=360000):
+def cache_load_utturances(filename="data/.simple.cache", ttl=360000):
     """
     Decorator for wrapping simple cache around load_utterances.
 
