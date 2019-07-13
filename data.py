@@ -1,17 +1,17 @@
 import collections
 import random
 import copy
-import re
+# import re
 import itertools
 import pickle
 from pathlib import Path
 import logging
 import simple_cache
+import tempfile
 
 from anytree import Node
 from sklearn.model_selection import train_test_split
 from tqdm import tqdm as tqdm
-from pathlib import Path
 
 logger = logging.getLogger(__file__)
 
@@ -102,56 +102,47 @@ def collect_thread_files(data_dir, subreddits):
         )
     return splits
 
-def cache_load_utturances(cache_dir="/tmp/", ttl=360000):
+
+def cache_load_utturances(cache_dir=tempfile.gettempdir(), ttl=360000):
     """
     Decorator for wrapping simple cache around load_utterances.
 
     Since some arguments are unhashable (tokenizer) or immutable (list) we need to make the key manually
     """
+
     def decorate(func):
         @simple_cache.wraps(func)
         def wrapper(**kwargs):
             # key = (args, tuple_kwargs(kwargs))
             filename = Path(cache_dir).joinpath(f"{kwargs['personality']}.cache")
-            tokenizer = kwargs['tokenizer']
+            tokenizer = kwargs["tokenizer"]
             # We must use immutaable, hashable args as keys, so no lists, sets, or tokenizer
-            key = (simple_cache.tuple_kwargs(dict(
-                personality=kwargs['personality'],
-                max_seq_len=kwargs['max_seq_len'],
-                files=tuple(set([str(f) for f in kwargs['files']])),
-                tokenizer_name=type(tokenizer).__name__,
-                vocab_size=len(tokenizer.encoder),
-                special_tokens=tuple(set(tokenizer.special_tokens)),
-                num_candidates=kwargs['num_candidates']
+            key = simple_cache.tuple_kwargs(
+                dict(
+                    personality=kwargs["personality"],
+                    max_seq_len=kwargs["max_seq_len"],
+                    files=tuple(set([str(f) for f in kwargs["files"]])),
+                    tokenizer_name=type(tokenizer).__name__,
+                    vocab_size=len(tokenizer.encoder),
+                    special_tokens=tuple(set(tokenizer.special_tokens)),
+                    num_candidates=kwargs["num_candidates"],
                 )
-            ))
+            )
             value = simple_cache.load_key(filename, key)
             if value is None:
                 value = func(**kwargs)
                 simple_cache.save_key(filename, key, value, ttl)
             return value
+
         return wrapper
+
     return decorate
+
 
 @cache_load_utturances()
 def load_utterances(personality, files, num_candidates, tokenizer, max_seq_len):
-    # # cache this with immutables
-    # cache_key = (simple_cache.tuple_kwargs(dict(
-    #     personality=personality,
-    #     max_seq_len=max_seq_len,
-    #     files=set(files),
-    #     tokenizer_name=type(tokenizer).__name__,
-    #     vocab_size=len(tokenizer.encoder),
-    #     special_tokens=set(tokenizer.special_tokens)
-    #     )
-    # ))
-    # cache_filename = f"/tmp/{personality}.cache"
-    # value = simple_cache.load_key(filename, cache_key)
-    # if value is not None:
-    #     return value
-
     utterances = []
-    for file in tqdm(files, desc=personality, unit='thread'):
+    for file in tqdm(files, desc=personality, unit="thread"):
         # load
         try:
             thread = pickle.load(file.open("rb"))
@@ -159,11 +150,13 @@ def load_utterances(personality, files, num_candidates, tokenizer, max_seq_len):
             logger.warning(f"Exception opening {file}, {e}")
             file.unlink()
             continue
-        
+
         # Anytree seems to be v. slow of theads with lots of comments (>1000)
-        comments_all = len(list(itertools.chain(*list(thread["comment_dict"].values()))))
+        comments_all = len(
+            list(itertools.chain(*list(thread["comment_dict"].values())))
+        )
         if comments_all > 3000:
-            print(f'Skipping {personality} thread with many ({comments_all}) comments')
+            print(f"Skipping {personality} thread with many ({comments_all}) comments")
             continue
         try:
             nodes_by_id, thing_by_id = thread2tree(
@@ -184,15 +177,11 @@ def load_utterances(personality, files, num_candidates, tokenizer, max_seq_len):
                 and len(current_node.children) >= 1  # And chil comments
             ):
                 history = [
-                    format_reddit_thing(
-                        thing_by_id[node.name], submission_id
-                    )
-                    for node in current_node.path[-10:]
+                    format_reddit_thing(thing_by_id[node.name], submission_id)
+                    for node in current_node.path
                 ]
 
-                replies = [
-                    thing_by_id[node.name] for node in current_node.children
-                ]
+                replies = [thing_by_id[node.name] for node in current_node.children]
 
                 # We now want to find distractors. None of these ID's will do
                 correct_ids = (
@@ -201,9 +190,7 @@ def load_utterances(personality, files, num_candidates, tokenizer, max_seq_len):
                     + [node.name for node in current_node.children]
                 )
                 distractor_ids = [
-                    k
-                    for k, v in nodes_by_id.items()
-                    if k not in correct_ids
+                    k for k, v in nodes_by_id.items() if k not in correct_ids
                 ]
                 distractors = [thing_by_id[d_id] for d_id in distractor_ids]
 
@@ -216,7 +203,7 @@ def load_utterances(personality, files, num_candidates, tokenizer, max_seq_len):
                     lambda x: x.get("author", "") != "AutoModerator",
                     lambda x: not x.get("stickied", False),
                     # Short comments are low information and too easy
-                    lambda x: len(x.get("body", "")) > 50,
+                    lambda x: len(x.get("body", "")) > 40,
                 ]
                 # TODO try filtering out replies that overlap too much with history. This avoid repitative qouting and answers
                 for f in filters:
@@ -225,12 +212,10 @@ def load_utterances(personality, files, num_candidates, tokenizer, max_seq_len):
 
                 # Format "things" from reddit
                 replies = [
-                    format_reddit_thing(thing, submission_id)
-                    for thing in replies
+                    format_reddit_thing(thing, submission_id) for thing in replies
                 ]
                 distractors = [
-                    format_reddit_thing(thing, submission_id)
-                    for thing in distractors
+                    format_reddit_thing(thing, submission_id) for thing in distractors
                 ]
 
                 # # also removed qouted text
@@ -240,22 +225,19 @@ def load_utterances(personality, files, num_candidates, tokenizer, max_seq_len):
                 if len(distractors) >= num_candidates - 1:
                     # Distractors at start of candidates, real reply at end
                     for reply in replies:
-                        candidates = random.sample(
-                            distractors, num_candidates - 1
-                        ) + [reply]
+                        candidates = random.sample(distractors, num_candidates - 1) + [
+                            reply
+                        ]
 
-                        utterance = dict(
-                            candidates=candidates, history=history
-                        )
+                        utterance = dict(candidates=candidates, history=history)
                         utterance = tokenize(utterance, tokenizer, max_seq_len)
                         utterances.append(utterance)
             else:
                 logger.debug("skipping node with too few paths")
-    
-    # save_key(cache_filename, cache_key, utterances, ttl=36000000)
+
     personality_toks = tokenize([personality], tokenizer, max_seq_len)
     return dict(personality=personality_toks, utterances=utterances)
-            
+
 
 def threads_to_utterances(splits, num_candidates, tokenizer, max_seq_len):
     """Process a json of personality threads into utterances.
@@ -273,17 +255,25 @@ def threads_to_utterances(splits, num_candidates, tokenizer, max_seq_len):
     dataset2 = collections.defaultdict(list)
     for split, personalities in splits.items():
         for personality, files in personalities.items():
-            utterances_dict = load_utterances(personality=personality, files=files, num_candidates=num_candidates, tokenizer=tokenizer, max_seq_len=max_seq_len)
-            
-            dataset2[split].append(
-                utterances_dict
+            utterances_dict = load_utterances(
+                personality=personality,
+                files=files,
+                num_candidates=num_candidates,
+                tokenizer=tokenizer,
+                max_seq_len=max_seq_len,
             )
-            
+
+            dataset2[split].append(utterances_dict)
+
             logger.info(
                 f"Utterances for {split} & /r/{personality}: {len(utterances_dict['utterances'])}"
             )
             if split == "train" and random.random() < 0.2:
-                logger.info("Example inputs for %s: %s", personality, utterances_dict['utterances'][0])
+                logger.info(
+                    "Example inputs for %s: %s",
+                    personality,
+                    utterances_dict["utterances"][0],
+                )
 
     logger.info("Tokenize and encode the dataset.")
 
@@ -296,21 +286,10 @@ def get_dataset(
 
     max_seq_len = max_seq_len or tokenizer.max_len
     data_dir = Path(data_path)
-    # vocab_size = len(tokenizer.encoder)
-
-    # # Load from cache is possible, this probobly isn't all the relevant factors, but the tokenizer wont hash
-    # cache_file = data_dir.joinpath(
-    #     f'.cache-{num_candidates}-{"_".join(subreddits)}-{max_seq_len}_{vocab_size}_{type(tokenizer).__name__}.pkl'
-    # )
-    # if cache_file.is_file():
-    #     logger.info(f"Loaded from cache {cache_file}")
-    #     return pickle.load(cache_file.open("rb"))
 
     splits = collect_thread_files(data_dir, subreddits)
 
     dataset2 = threads_to_utterances(splits, num_candidates, tokenizer, max_seq_len)
-
-    # pickle.dump(dataset2, cache_file.open("wb"))
     return dataset2
 
 
@@ -318,7 +297,9 @@ def tokenize(obj, tokenizer, max_seq_len):
     """Recursively convert to tokens."""
     if isinstance(obj, str):
         toks = tokenizer.convert_tokens_to_ids(tokenizer.tokenize(obj)[:max_seq_len])
-        assert all([t < len(tokenizer.encoder) for t in toks]) # all(toks < len(tokenizer.encoder))
+        assert all(
+            [t < len(tokenizer.encoder) for t in toks]
+        )  # all(toks < len(tokenizer.encoder))
         return toks
     if isinstance(obj, dict):
         return dict((n, tokenize(o, tokenizer, max_seq_len)) for n, o in obj.items())
