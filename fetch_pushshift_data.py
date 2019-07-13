@@ -293,6 +293,8 @@ for subreddit in args.subreddit:
                         submission_comment_ids = api._get_submission_comment_ids(
                             submission["id"]
                         )
+                        if len(submission_comment_ids) > 3000:
+                            continue # because it's too slow to parse these large trees with the current code
                         comment_dict = collections.defaultdict(list)
 
                         # Batch to avoid 414: Url too long

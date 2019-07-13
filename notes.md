@@ -572,3 +572,5 @@ human: go on...
 robot: I had a point about the joke, but I was wrong, it was a very new one.
 
 ```
+
+Getting a weird error `RuntimeError: Creating MTGP constants failed. at /pytorch/aten/src/THC/THCTensorRandom.cu:33 `

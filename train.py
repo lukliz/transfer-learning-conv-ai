@@ -151,23 +151,21 @@ def get_data_loaders(args, tokenizer):
             num_candidates = min(args.num_candidates, num_candidates)
         for dialog in dataset:
             persona = dialog["personality"].copy()
-            for _ in range(args.personality_permutations):
-                for utterance in dialog["utterances"]:
-                    history = utterance["history"][-(2 * args.max_history + 1) :]
-                    for j, candidate in enumerate(
-                        utterance["candidates"][-num_candidates:]
-                    ):
-                        # The last candiate is the real answer, the others are distactors
-                        #  used for the classification part of the dual language model
-                        lm_labels = bool(j == num_candidates - 1)
-                        instance, _ = build_input_from_segments(
-                            persona, history, candidate, tokenizer, lm_labels, max_len=args.max_seq_len
-                        )
-                        for input_name, input_array in instance.items():
-                            datasets[dataset_name][input_name].append(input_array)
-                    datasets[dataset_name]["mc_labels"].append(num_candidates - 1)
-                    datasets[dataset_name]["n_candidates"] = num_candidates
-                persona = [persona[-1]] + persona[:-1]  # permuted personalities
+            for utterance in dialog["utterances"]:
+                history = utterance["history"][-(2 * args.max_history + 1) :]
+                for j, candidate in enumerate(
+                    utterance["candidates"][-num_candidates:]
+                ):
+                    # The last candiate is the real answer, the others are distactors
+                    #  used for the classification part of the dual language model
+                    lm_labels = bool(j == num_candidates - 1)
+                    instance, _ = build_input_from_segments(
+                        persona, history, candidate, tokenizer, lm_labels, max_len=args.max_seq_len
+                    )
+                    for input_name, input_array in instance.items():
+                        datasets[dataset_name][input_name].append(input_array)
+                datasets[dataset_name]["mc_labels"].append(num_candidates - 1)
+                datasets[dataset_name]["n_candidates"] = num_candidates
 
     logger.info("Pad inputs and convert to Tensor")
     tensor_datasets = {"train": [], "valid": [], "test": []}
@@ -248,19 +246,19 @@ def train():
     parser.add_argument(
         "--max_history",
         type=int,
-        default=6,
+        default=4,
         help="Number of previous exchanges to keep in history",
     )
     parser.add_argument(
-        "--train_batch_size", type=int, default=4, help="Batch size for training"
+        "--train_batch_size", type=int, default=1, help="Batch size for training"
     )
     parser.add_argument(
-        "--valid_batch_size", type=int, default=4, help="Batch size for validation"
+        "--valid_batch_size", type=int, default=1, help="Batch size for validation"
     )
     parser.add_argument(
         "--gradient_accumulation_steps",
         type=int,
-        default=8,
+        default=32,
         help="Accumulate gradients on several steps",
     )
     parser.add_argument("--lr", type=float, default=6.25e-5, help="Learning rate")
@@ -277,12 +275,6 @@ def train():
         "--n_epochs", type=int, default=3, help="Number of training epochs"
     )
     parser.add_argument(
-        "--personality_permutations",
-        type=int,
-        default=1,
-        help="Number of permutations of personality sentences",
-    )
-    parser.add_argument(
         "--eval_before_start",
         action="store_true",
         help="If true start with a first evaluation before training",
@@ -297,7 +289,7 @@ def train():
         "--fp16",
         type=str,
         default="",
-        help="Set to O0, O1, O2 or O3 for fp16 training (see apex documentation)",
+        help="Set to O0, O1, O2 or O3 for fp16 training (see apex documentation). Try O2. Note first char is the letter 'oh'",
     )
     parser.add_argument(
         "--local_rank",
@@ -308,8 +300,8 @@ def train():
     parser.add_argument(
         "--max_seq_len",
         type=int,
-        default=None,
-        help="Max length size",
+        default=1024,
+        help="Max length size, same or smaller than n_ctx in model",
     )
     args = parser.parse_args()
 
