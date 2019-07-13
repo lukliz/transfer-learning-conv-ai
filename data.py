@@ -120,10 +120,10 @@ def cache_load_utturances(filename="data/.simple.cache", ttl=360000):
                 dict(
                     personality=kwargs["personality"],
                     max_seq_len=kwargs["max_seq_len"],
-                    files=tuple(set([str(f) for f in kwargs["files"]])),
+                    files=tuple(sorted([str(f) for f in kwargs["files"]])),
                     tokenizer_name=type(tokenizer).__name__,
                     vocab_size=len(tokenizer.encoder),
-                    special_tokens=tuple(set(tokenizer.special_tokens)),
+                    special_tokens=tuple(sorted(tokenizer.special_tokens)),
                     num_candidates=kwargs["num_candidates"],
                 )
             )
@@ -131,6 +131,8 @@ def cache_load_utturances(filename="data/.simple.cache", ttl=360000):
             if value is None:
                 value = func(**kwargs)
                 simple_cache.save_key(filename, key, value, ttl)
+            else:
+                print("Loaded utturances from cache")
             return value
 
         return wrapper
