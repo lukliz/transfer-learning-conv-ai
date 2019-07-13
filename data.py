@@ -142,7 +142,7 @@ def cache_load_utturances(cache_dir=tempfile.gettempdir(), ttl=360000):
 @cache_load_utturances()
 def load_utterances(personality, files, num_candidates, tokenizer, max_seq_len):
     utterances = []
-    for file in tqdm(files, desc=personality, unit="thread"):
+    for file in tqdm(files, desc=f"Loading {personality}", unit="thread"):
         # load
         try:
             thread = pickle.load(file.open("rb"))
@@ -155,7 +155,7 @@ def load_utterances(personality, files, num_candidates, tokenizer, max_seq_len):
         comments_all = len(
             list(itertools.chain(*list(thread["comment_dict"].values())))
         )
-        if comments_all > 3000:
+        if comments_all > 1000:
             print(f"Skipping {personality} thread with many ({comments_all}) comments")
             continue
         try:
@@ -274,9 +274,6 @@ def threads_to_utterances(splits, num_candidates, tokenizer, max_seq_len):
                     personality,
                     utterances_dict["utterances"][0],
                 )
-
-    logger.info("Tokenize and encode the dataset.")
-
     return dataset2
 
 
