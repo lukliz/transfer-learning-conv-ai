@@ -134,7 +134,6 @@ def get_data_loaders(args, tokenizer):
     personachat = get_dataset(
         tokenizer,
         args.dataset_path,
-        num_candidates=args.num_candidates,
         subreddits=args.subreddit,
         max_seq_len=args.max_seq_len
     )
