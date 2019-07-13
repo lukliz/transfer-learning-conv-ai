@@ -6,6 +6,7 @@ import itertools
 import pickle
 from pathlib import Path
 import logging
+from cachier import cachier
 
 from anytree import Node
 from sklearn.model_selection import train_test_split
@@ -130,8 +131,11 @@ def threads_to_utterances(splits, num_candidates):
                         logger.warning(f"Exception opening {file}, {e}")
                         file.unlink()
                         continue
-                    # Warning this seems to be slow of theads with lots of comments
-                    if len(thread["comment_dict"]) > 100:
+                    
+                    # Anytree seems to be v. slow of theads with lots of comments (>1000)
+                    comments_all = len(list(itertools.chain(*list(thread["comment_dict"].values()))))
+                    if comments_all > 3000:
+                        print(f'Skipping {personality} thread with many ({comments_all}) comments')
                         continue
                     try:
                         nodes_by_id, thing_by_id = thread2tree(
@@ -234,16 +238,18 @@ def threads_to_utterances(splits, num_candidates):
     return dataset2
 
 
+@cachier()
 def get_dataset(
     tokenizer, data_path, num_candidates=3, subreddits=[], max_seq_len=None
 ):
 
     max_seq_len = max_seq_len or tokenizer.max_len
     data_dir = Path(data_path)
+    vocab_size = len(tokenizer.encoder)
 
-    # Load from cache is possible
+    # Load from cache is possible, this probobly isn't all the relevant factors, but the tokenizer wont hash
     cache_file = data_dir.joinpath(
-        f'.cache-{num_candidates}-{"_".join(subreddits)}-{max_seq_len}.pkl'
+        f'.cache-{num_candidates}-{"_".join(subreddits)}-{max_seq_len}_{vocab_size}_{type(tokenizer).__name__}.pkl'
     )
     if cache_file.is_file():
         logger.info(f"Loaded from cache {cache_file}")
