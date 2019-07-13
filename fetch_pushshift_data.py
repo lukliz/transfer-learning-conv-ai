@@ -1,82 +1,4 @@
-#!/usr/bin/env python
-
-# coding: utf-8
-"""
-To get data from pushshift and format it like:
-
-----------
-
->Could you please share an example how you represented the inputs, including separators?
-
-Sure, here's an example of how I represented the beginning of [this thread in r/math](https://old.reddit.com/r/math/comments/bqjkdb/why_baby_rudin/?sort=top):
-
-    ****S
-
-    Why Baby Rudin?
-    Hello all,
-    
-    I've noticed that Baby Rudin is typically held as the standard for undergraduate real analysis texts. Does anyone know why this is? Is Baby Rudin more rigorous/ comprehensive/ written better than other undergraduate RA texts, or is it just the standard since it's a classic? Just curious.
-    ****ES bqjkdb
-    
-    ****T bqjkdb
-    baby rudin is a great analysis textbook for these reasons: 
-    
-    * it fits a ton of material in a relatively short book
-    * proofs are to the point and minimalist, which forces you to do a lot of legwork filling in the details
-    * rich and challenging exercises
-    
-    for reasons why baby rudin is not so loved as an *introductory* analysis textbook, see the above.
-    ****ET eo50kel
-    
-    ****R eo50kel
-    I wish I have the money to give you a gold for this amazing comment.
-    ****ER eo5jmed
-    
-    ****R eo5jmed
-    save up and spend it on textbooks instead!
-    ****ER eo634yh
-    
-    ****R eo50kel
-    See above for reasons.
-    See below for proof.
-    ****ER eo6toi8
-    
-    ****T bqjkdb
-    Because I experienced the pain, so now it's the next generations turn.
-    ****ET eo5mkqq
-    
-    ****R eo5mkqq
-    Exactly, it's a form of ritual hazing for math undergraduates.
-    ****ER eo610x7
-
-As you can see, I used the token '****' to represent the beginning/end of comments and submissions. 'S' and 'ES' represent the start and end of submissions, respectively, while 'T' and 'ET' are for top-level comments, and 'R' and 'ER' are for replies (comment-level > 1).
-
-For submissions, the first line is the URL (since this example is a self-post, that line is blank), while the second is the title, and the third is the self-text (if any).
-
->What hyperparams did you use, especially what context length?
-
-For fine-tuning, I just used the default parameters in the [nshepperd train.py module](https://github.com/nshepperd/gpt-2/blob/finetuning/train.py). 
-
-What exactly are you referring to by "context length"? To generate submissions, I prompt with "****S\n" as the context. For replies, I'd use the entire "ancestry", ie the parent comment, the "grandparent" comment (if applicable), and including the submission info, appended with the correct metadata for the reply.
-
-I'm currently using a temperature of 0.8, and for most of the bots the 'length' parameter is 512 tokens (I use longer lengths for a few of them, like shortscarystories or writingprompts).
-
->Have you done any cool experiments with these, like making a chat bot, if so, what did you find?
-
-Haven't done a chatbot, but I've been working on a few experiments that are turning out really well so far (IMO). I'm planning on making a post about it this weekend, if I have some free time.
-
-
-~~ from https://old.reddit.com/r/SubSimulatorGPT2Meta/comments/caelo0/could_you_give_more_details_on_the_input/et8n6xa/?context=10000
-
-Changes:
-- [ ] pickle original data so I can reorder on the fly
-- [ ] use more info, like Author name? Score
-- [ ] write code to concat and split
-
-
-- psaw rate limite 180/m
-- praw rate limite 10 / m but can have multiple active
-"""
+"""Get data from pushshift and put into a pickle."""
 
 
 import argparse
@@ -236,114 +158,128 @@ def comment_praw2psaw(comment_praw):
     return cp_dict
 
 
-random.shuffle(args.subreddit)
+# random.shuffle(args.subreddit)
 for subreddit in args.subreddit:
-    try:
-        # print(subreddit)
 
-        # Since the api often only returns 1000, lets query in monthly intervals
-        dates = pd.date_range("2018", "2019", freq="3M")
-        date_bins = list(zip(dates[:-1], dates[1:]))
-        random.shuffle(date_bins)
-        with tqdm(
-            desc=subreddit, unit="submission", total=args.number_of_threads
-        ) as prog:
 
-            for after, before in date_bins:
-                logger.debug(
-                    "%s",
-                    dict(
-                        subreddit=subreddit,
-                        num_comments=">10",
-                        after=after,
-                        before=before,
-                        sort_type="num_comments",
-                    ),
-                )
+    # Since the api often only returns 1000, lets query in monthly intervals
+    date_first = "2018-01-01"
+    date_last = "2019-01-01"
 
-                # Maybe check name is right, and how many threads
-                # agg = api.search_submissions(
-                #     subreddit=subreddit,
-                #     num_comments=">10",
-                #     after=after,
-                #     before=before,
-                #     sort_type="num_comments",
-                #     agg="subreddit"
-                # )
+    dates = pd.date_range(date_first, date_last, freq="3M")
+    date_bins = list(zip(dates[:-1], dates[1:]))
+    random.shuffle(date_bins)
 
-                submissions = api.search_submissions(
+    # First result is the stats, which we can use to get number of threads
+    submissions = api.search_submissions(
+        subreddit=subreddit,
+        num_comments=">10",
+        after=date_first,
+        before=date_last,
+        sort_type="num_comments",
+        aggs='subreddit'
+    )
+    agg = next(submissions)
+    if not agg['subreddit']:
+        logger.warning(f"No submissions within filter for subreddit found:{subreddit}")
+        continue
+    total_submissions = agg['subreddit'][0]['doc_count']
+
+    with tqdm(
+        desc=subreddit, unit="submission", total=total_submissions
+    ) as prog:
+
+        for after, before in date_bins:
+            logger.debug(
+                "%s",
+                dict(
                     subreddit=subreddit,
                     num_comments=">10",
                     after=after,
                     before=before,
                     sort_type="num_comments",
-                )
-                out_dir = data_dir.joinpath(subreddit)
-                os.makedirs(out_dir, exist_ok=True)
-                if len(list(out_dir.glob("*.text"))) > args.number_of_threads:
-                    print(f"stopping at {args.number_of_threads} threads")
-                    break
-                for submission in submissions:
-                    submission = psaw_to_dict(submission)
-                    submission_id = get_id_for_comments(submission)
-                    out_file = out_dir.joinpath(submission_id + ".pickle")
+                ),
+            )
 
-                    if not out_file.is_file():
-                        # Get comments
-                        submission_comment_ids = api._get_submission_comment_ids(
-                            submission["id"]
-                        )
-                        if len(submission_comment_ids) > 3000:
-                            continue # because it's too slow to parse these large trees with the current code
-                        comment_dict = collections.defaultdict(list)
+            submissions = api.search_submissions(
+                subreddit=subreddit,
+                num_comments=">10",
+                after=after,
+                before=before,
+                sort_type="num_comments",
+                aggs='subreddit'
+            )
+            # First result is the stats, which we can use to get number of threads
+            agg = next(submissions)
+            if not agg['subreddit']:
+                continue
+            doc_count = agg['subreddit'][0]['doc_count']
 
-                        # Batch to avoid 414: Url too long
-                        batch_size= 200
-                        for i in range(0, len(submission_comment_ids), batch_size):
-                            batch_ids = submission_comment_ids[i:i+batch_size]
+            out_dir = data_dir.joinpath(subreddit)
+            os.makedirs(out_dir, exist_ok=True)
+            if len(list(out_dir.glob("*.text"))) > args.number_of_threads:
+                print(f"stopping at {args.number_of_threads} threads")
+                break
+            for submission in submissions:
+                submission = psaw_to_dict(submission)
+                submission_id = get_id_for_comments(submission)
+                out_file = out_dir.joinpath(submission_id + ".pickle")
 
-                            # Use psaw
-                            try:                                
-                                comments = api.search_comments(ids=batch_ids)
-                                # It will just repeat unless we set a limit
-                                comments = [
-                                    next(comments)
-                                    for _ in tqdm(
-                                        range(submission["num_comments"]),
-                                        leave=False,
-                                        unit="comment",
-                                    )
-                                ]
-                                # Or praw... nah slow
-                                #             comments = [comment_praw2psaw(reddit.comment(id).refresh()) for id in submission_comment_ids]
-                                for comment in comments:
-                                    comment = psaw_to_dict(comment)
-                                    comment_dict[comment["parent_id"]].append(comment)
+                if not out_file.is_file():
+                    # Get comments
+                    submission_comment_ids = api._get_submission_comment_ids(
+                        submission["id"]
+                    )
+                    if len(submission_comment_ids) > 3000:
+                        continue # because it's too slow to parse these large trees with the current code
+                    comment_dict = collections.defaultdict(list)
 
-                                # sort by karma, if available
-                                for key in comment_dict.keys():
-                                    comment_dict[key].sort(
-                                        key=lambda x: x.get("score", 0), reverse=True
-                                    )
+                    # Batch to avoid 414: Url too long
+                    batch_size= 200
+                    for i in range(0, len(submission_comment_ids), batch_size):
+                        batch_ids = submission_comment_ids[i:i+batch_size]
 
-                                # pickle so we will have original data if wanted, that way we can make changes to input data formatting
-                                out_pkl = out_dir.joinpath(submission_id + ".pickle")
-                                pickle.dump(
-                                    dict(submission=submission, comment_dict=comment_dict),
-                                    out_pkl.open("wb"),
+                        # Use psaw
+                        try:                                
+                            comments = api.search_comments(ids=batch_ids)
+                            # It will just repeat unless we set a limit
+                            comments = [
+                                next(comments)
+                                for _ in tqdm(
+                                    range(submission["num_comments"]),
+                                    leave=False,
+                                    unit="comment",
                                 )
-                                logger.debug("writing pickle %s", out_pkl)
+                            ]
+                            # Or praw... nah slow
+                            #             comments = [comment_praw2psaw(reddit.comment(id).refresh()) for id in submission_comment_ids]
+                            for comment in comments:
+                                comment = psaw_to_dict(comment)
+                                comment_dict[comment["parent_id"]].append(comment)
 
-                                # format
-                                # text = format_comments_dict(comment_dict, submission)
+                            # sort by karma, if available
+                            for key in comment_dict.keys():
+                                comment_dict[key].sort(
+                                    key=lambda x: x.get("score", 0), reverse=True
+                                )
 
-                                # # write out thread
-                                # out_file.write_text(text)
-                            except Exception as e:
-                                logger.warning(f"Exception {e}, for subreddit={subreddit}, submission_id={submission['id']} submission_comment_ids={len(submission_comment_ids)} after={after} before={before}")
-                            prog.update(1)
-                    else:
-                        logger.debug("skipping existing file %s", out_file)
+                            # pickle so we will have original data if wanted, that way we can make changes to input data formatting
+                            out_pkl = out_dir.joinpath(submission_id + ".pickle")
+                            pickle.dump(
+                                dict(submission=submission, comment_dict=comment_dict),
+                                out_pkl.open("wb"),
+                            )
+                            logger.debug("writing pickle %s", out_pkl)
+
+                            # format
+                            # text = format_comments_dict(comment_dict, submission)
+
+                            # # write out thread
+                            # out_file.write_text(text)
+                        except Exception as e:
+                            logger.warning(f"Exception {e}, for subreddit={subreddit}, submission_id={submission['id']} submission_comment_ids={len(submission_comment_ids)} after={after} before={before}")
+                            raise e
                         prog.update(1)
-    except Exception as e:
-        logger.warning(e)
+                else:
+                    logger.debug("skipping existing file %s", out_file)
+                    prog.update(1)
