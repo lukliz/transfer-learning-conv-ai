@@ -108,7 +108,7 @@ def collect_thread_files(data_dir, subreddits):
     return splits
 
 
-def cache_load_utturances(filename="data/.simple.cache", ttl=360000):
+def cache_load_utturances(ttl=360000):
     """
     Decorator for wrapping simple cache around load_utterances.
 
@@ -119,6 +119,7 @@ def cache_load_utturances(filename="data/.simple.cache", ttl=360000):
         @simple_cache.wraps(func)
         def wrapper(**kwargs):
             # key = (args, tuple_kwargs(kwargs))
+            filename = f"data/.simple.{kwargs['personality']}.cache"
             tokenizer = kwargs["tokenizer"]
             # We must use immutaable, hashable args as keys, so no lists, sets, or tokenizer
             key = simple_cache.tuple_kwargs(
@@ -180,7 +181,7 @@ def load_utterances(personality, files, tokenizer, max_seq_len, num_candidates=1
             if (
                 current_node.parent
                 and len(current_node.path) > 1  # It must have some parent comments
-                and len(current_node.children) >= 1  # And chil comments
+                and len(current_node.children) >= 1  # And child comments
             ):
                 history = [
                     format_reddit_thing(thing_by_id[node.name], submission_id)
@@ -209,7 +210,8 @@ def load_utterances(personality, files, tokenizer, max_seq_len, num_candidates=1
                     lambda x: x.get("author", "") != "AutoModerator",
                     lambda x: not x.get("stickied", False),
                     # Short comments are low information and too easy
-                    lambda x: len(x.get("body", "")) > 40,
+                    lambda x: len(x.get("body", "")) > 20,
+                    lambda x: len(x.get("body", "")) < 280, # Ones that are too long don't do well sometimes, tweet length
                 ]
                 # TODO try filtering out replies that overlap too much with history. This avoid repitative qouting and answers
                 for f in filters:

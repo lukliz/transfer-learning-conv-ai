@@ -575,3 +575,19 @@ robot: I had a point about the joke, but I was wrong, it was a very new one.
 
 Getting a weird error `RuntimeError: Creating MTGP constants failed. at /pytorch/aten/src/THC/THCTensorRandom.cu:33 `
 Try cacching each subreddit
+
+## 2019-07-13 11:33:48
+
+- Got it running with GPT2 medium on p3.2xlarge.
+  - training a just roast_me + rare_insults bot
+  - `python -m ipdb train.py --dataset_path ./data/reddit_threads --fp16 O2 --gradient_accumulation_steps 32 --train_batch_size 1 --valid_batch_size 1 --n_epochs 10 --num_candidates 2 --max_seq_len 750 --model_checkpoint gpt2-medium -s RoastMe -s rare_insults `
+
+to: transfer scraped data to ec2 
+- `rsync -avc -n ./data/reddit_threads/ ubuntu@wassname.play.ai:/home/ubuntu/transfer-learning-conv-ai/data/reddit_threads`
+
+- got language server working, with no intellicode
+- pylama works when prospector doesn't
+- 
+2019-07-13 03:50:58 ip-172-31-39-133 pytorch_pretrained_bert.optimization[7422] WARNING t_total value of -1 results in schedule not being applied
+
+- It definitly seems that text only subs are better, and ones with conversations. Roasts is bad because they are all refering back to the picture. And also because the speaker depends a lot, wether it's op or not. Maybe I should remove ops replies.
