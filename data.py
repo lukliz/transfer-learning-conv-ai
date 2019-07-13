@@ -139,7 +139,7 @@ def cache_load_utturances(filename="data/.simple.cache", ttl=360000):
 
 
 @cache_load_utturances()
-def load_utterances(personality, files, num_candidates, tokenizer, max_seq_len):
+def load_utterances(personality, files, tokenizer, max_seq_len, num_candidates=10):
     utterances = []
     for file in tqdm(files, desc=f"Loading {personality}", unit="thread"):
         # load
@@ -238,7 +238,7 @@ def load_utterances(personality, files, num_candidates, tokenizer, max_seq_len):
     return dict(personality=personality_toks, utterances=utterances)
 
 
-def threads_to_utterances(splits, num_candidates, tokenizer, max_seq_len):
+def threads_to_utterances(splits, tokenizer, max_seq_len):
     """Process a json of personality threads into utterances.
     
     json structure:
@@ -257,9 +257,9 @@ def threads_to_utterances(splits, num_candidates, tokenizer, max_seq_len):
             utterances_dict = load_utterances(
                 personality=personality,
                 files=files,
-                num_candidates=num_candidates,
                 tokenizer=tokenizer,
                 max_seq_len=max_seq_len,
+                num_candidates=10,
             )
 
             dataset2[split].append(utterances_dict)
@@ -277,7 +277,7 @@ def threads_to_utterances(splits, num_candidates, tokenizer, max_seq_len):
 
 
 def get_dataset(
-    tokenizer, data_path, num_candidates=3, subreddits=[], max_seq_len=None
+    tokenizer, data_path, subreddits=[], max_seq_len=None
 ):
 
     max_seq_len = max_seq_len or tokenizer.max_len
@@ -285,7 +285,7 @@ def get_dataset(
 
     splits = collect_thread_files(data_dir, subreddits)
 
-    dataset2 = threads_to_utterances(splits, num_candidates, tokenizer, max_seq_len)
+    dataset2 = threads_to_utterances(splits, tokenizer, max_seq_len)
     return dataset2
 
 
