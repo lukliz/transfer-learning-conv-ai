@@ -8,6 +8,7 @@ from pathlib import Path
 import logging
 import simple_cache
 import tempfile
+import html
 
 from anytree import Node
 from sklearn.model_selection import train_test_split
@@ -18,9 +19,13 @@ logger = logging.getLogger(__file__)
 
 def format_reddit_thing(thing, submission_id):
     """Format a dict of comment or submisson data."""
+    
     if thing["type"] == "submission":
-        return "\n".join([thing["title"], thing.get("selftext", "")])
-    return thing["body"]
+        text = "\n".join([thing["title"], thing.get("selftext", "")])
+    else:
+        text = thing["body"]
+    text = html.unescape(text)
+    return text
 
 
 def get_id_for_comments(thing):
