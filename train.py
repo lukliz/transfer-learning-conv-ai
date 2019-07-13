@@ -219,6 +219,7 @@ def get_data_loaders(args, tokenizer):
             valid_dataset.tensors[0].shape, len(valid_dataset)
         )
     )
+    assert train_dataset.tensors[0].shape[2]<tokenizer.max_len
     return train_loader, valid_loader, train_sampler, valid_sampler
 
 
