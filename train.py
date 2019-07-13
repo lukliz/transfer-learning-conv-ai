@@ -323,23 +323,31 @@ def train():
         torch.distributed.init_process_group(backend="nccl", init_method="env://")
 
     logger.info(
-        "Prepare tokenizer, pretrained model and optimizer - add special tokens for fine-tuning"
+        "Prepare tokenizer - add special tokens for fine-tuning"
     )
     tokenizer_class = (
         GPT2Tokenizer if "gpt2" in args.model_checkpoint else OpenAIGPTTokenizer
     )
     tokenizer = tokenizer_class.from_pretrained(args.model_checkpoint)
+    tokenizer.set_special_tokens(SPECIAL_TOKENS)
+
+    logger.info("Prepare datasets")
+    train_loader, val_loader, train_sampler, valid_sampler = get_data_loaders(
+        args, tokenizer
+    )
+
+    logger.info(
+        "Prepare pretrained model and optimizer - add special tokens for fine-tuning"
+    )
     model_class = (
         GPT2DoubleHeadsModel
         if "gpt2" in args.model_checkpoint
         else OpenAIGPTDoubleHeadsModel
     )
     model = model_class.from_pretrained(args.model_checkpoint)
-    tokenizer.set_special_tokens(SPECIAL_TOKENS)
     model.set_num_special_tokens(len(SPECIAL_TOKENS))
     model.to(args.device)
     optimizer = OpenAIAdam(model.parameters(), lr=args.lr)
-
     # Prepare model for FP16 and distributed training if needed (order is important, distributed should be the last)
     if args.fp16:
         from apex import amp  # Apex is only required if we use fp16 training
@@ -349,11 +357,6 @@ def train():
         model = DistributedDataParallel(
             model, device_ids=[args.local_rank], output_device=args.local_rank
         )
-
-    logger.info("Prepare datasets")
-    train_loader, val_loader, train_sampler, valid_sampler = get_data_loaders(
-        args, tokenizer
-    )
 
     # Training function and trainer
     def update(engine, batch):
