@@ -220,7 +220,8 @@ def get_data_loaders(args, tokenizer):
             valid_dataset.tensors[0].shape, len(valid_dataset)
         )
     )
-    assert train_dataset.tensors[0].shape[2] < tokenizer.max_len, 'sequences should be less than max len'
+    assert train_dataset.tensors[0].shape[2] <= tokenizer.max_len, 'sequences should be less than max len'
+    raise Exception()
     return train_loader, valid_loader, train_sampler, valid_sampler
 
 
