@@ -161,7 +161,6 @@ def comment_praw2psaw(comment_praw):
 # random.shuffle(args.subreddit)
 for subreddit in args.subreddit:
 
-
     # Since the api often only returns 1000, lets query in monthly intervals
     date_first = "2018-01-01"
     date_last = "2019-01-01"

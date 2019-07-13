@@ -157,7 +157,7 @@ def load_utterances(personality, files, tokenizer, max_seq_len, num_candidates=1
             list(itertools.chain(*list(thread["comment_dict"].values())))
         )
         if comments_all > 1000:
-            print(f"Skipping {personality} thread with many ({comments_all}) comments")
+            logger.debug(f"Skipping {personality} thread with many ({comments_all}) comments")
             continue
         try:
             nodes_by_id, thing_by_id = thread2tree(
@@ -269,12 +269,6 @@ def threads_to_utterances(splits, tokenizer, max_seq_len):
             logger.info(
                 f"Utterances for {split} & /r/{personality}: {len(utterances_dict['utterances'])}"
             )
-            if split == "train" and random.random() < 0.2:
-                logger.info(
-                    "Example inputs for %s: %s",
-                    personality,
-                    utterances_dict["utterances"][0],
-                )
     return dataset2
 
 
