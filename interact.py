@@ -19,7 +19,7 @@ from pytorch_pretrained_bert import (GPT2LMHeadModel, GPT2Tokenizer,
                                      OpenAIGPTLMHeadModel, OpenAIGPTTokenizer)
 from train import SPECIAL_TOKENS, build_input_from_segments
 
-coloredlogs.install()
+# coloredlogs.install()
 
 
 def top_filtering(
@@ -107,7 +107,7 @@ def sample_sequence(personality, history, tokenizer, model, args, current_output
 def run():
     parser = ArgumentParser()
     parser.add_argument(
-        "--model", type=str, default="gpt2-medium", help="Model type (gpt or gpt2)"
+        "--model", type=str, default="gpt2", help="Model type (gpt or gpt2)"
     )
     parser.add_argument(
         "--model_checkpoint",
