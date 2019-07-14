@@ -363,7 +363,8 @@ def train():
     model = model_class.from_pretrained(args.model_checkpoint)
     model.set_num_special_tokens(len(SPECIAL_TOKENS))
     model.to(args.device)
-    optimizer = OpenAIAdam(model.parameters(), lr=args.lr)
+    t_total = len(train_loader) // args.gradient_accumulation_steps * args.n_epochs
+    optimizer = OpenAIAdam(model.parameters(), lr=args.lr, t_total=t_total, warmup=0.1)
     # Prepare model for FP16 and distributed training if needed (order is important, distributed should be the last)
     if args.fp16:
         from apex import amp  # Apex is only required if we use fp16 training
