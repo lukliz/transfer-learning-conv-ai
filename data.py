@@ -310,7 +310,7 @@ def get_dataset(tokenizer, data_path, subreddits=[], max_seq_len=None):
 
     max_seq_len = max_seq_len or tokenizer.max_len
     if data_path == "":
-        data_path = download_targz_to_folder(PERSONACHAT_URL)
+        data_path = download_targz_to_folder(PERSONACHAT_URL) + "/reddit_threads"
     data_dir = Path(data_path)
     print('data_dir', data_dir)
 
