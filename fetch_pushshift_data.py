@@ -5,14 +5,15 @@ import argparse
 import collections
 import copy
 import itertools
+import json
 import logging
 import os
 import random
-import pickle
 from pathlib import Path
+
+import pandas as pd
 from psaw import PushshiftAPI
 from tqdm import tqdm
-import pandas as pd
 
 api = PushshiftAPI()
 
@@ -55,7 +56,6 @@ parser.add_argument(
         # "OldieRoast",
         # "ScenesFromAHat",
         # "Showerthoughts"
-
     ],
     help="Subreddit names to scrape e.g. ' - s aww - s news '",
 )
@@ -176,17 +176,15 @@ for subreddit in args.subreddit:
         after=date_first,
         before=date_last,
         sort_type="num_comments",
-        aggs='subreddit'
+        aggs="subreddit",
     )
     agg = next(submissions)
-    if not agg['subreddit']:
+    if not agg["subreddit"]:
         logger.warning(f"No submissions within filter for subreddit found:{subreddit}")
         continue
-    total_submissions = agg['subreddit'][0]['doc_count']
+    total_submissions = agg["subreddit"][0]["doc_count"]
 
-    with tqdm(
-        desc=subreddit, unit="submission", total=total_submissions
-    ) as prog:
+    with tqdm(desc=subreddit, unit="submission", total=total_submissions) as prog:
 
         for after, before in date_bins:
             logger.debug(
@@ -206,13 +204,13 @@ for subreddit in args.subreddit:
                 after=after,
                 before=before,
                 sort_type="num_comments",
-                aggs='subreddit'
+                aggs="subreddit",
             )
             # First result is the stats, which we can use to get number of threads
             agg = next(submissions)
-            if not agg['subreddit']:
+            if not agg["subreddit"]:
                 continue
-            doc_count = agg['subreddit'][0]['doc_count']
+            doc_count = agg["subreddit"][0]["doc_count"]
 
             out_dir = data_dir.joinpath(subreddit)
             os.makedirs(out_dir, exist_ok=True)
@@ -230,16 +228,16 @@ for subreddit in args.subreddit:
                         submission["id"]
                     )
                     if len(submission_comment_ids) > 3000:
-                        continue # because it's too slow to parse these large trees with the current code
+                        continue  # because it's too slow to parse these large trees with the current code
                     comment_dict = collections.defaultdict(list)
 
                     # Batch to avoid 414: Url too long
-                    batch_size= 200
+                    batch_size = 200
                     for i in range(0, len(submission_comment_ids), batch_size):
-                        batch_ids = submission_comment_ids[i:i+batch_size]
+                        batch_ids = submission_comment_ids[i : i + batch_size]
 
                         # Use psaw
-                        try:                                
+                        try:
                             comments = api.search_comments(ids=batch_ids)
                             # It will just repeat unless we set a limit
                             comments = [
@@ -276,7 +274,9 @@ for subreddit in args.subreddit:
                             # # write out thread
                             # out_file.write_text(text)
                         except Exception as e:
-                            logger.warning(f"Exception {e}, for subreddit={subreddit}, submission_id={submission['id']} submission_comment_ids={len(submission_comment_ids)} after={after} before={before}")
+                            logger.warning(
+                                f"Exception {e}, for subreddit={subreddit}, submission_id={submission['id']} submission_comment_ids={len(submission_comment_ids)} after={after} before={before}"
+                            )
                             raise e
                         prog.update(1)
                 else:

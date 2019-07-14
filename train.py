@@ -1,37 +1,37 @@
 # Copyright (c) 2019-present, HuggingFace Inc.
 # All rights reserved. This source code is licensed under the BSD-style license found in the LICENSE file in the root directory of this source tree.
-import os
-import math
 import logging
-from pprint import pformat
+import math
+import os
 from argparse import ArgumentParser
 from collections import defaultdict
 from itertools import chain
-import coloredlogs
+from pprint import pformat
 
+import coloredlogs
 import torch
-from torch.nn.parallel import DistributedDataParallel
-from torch.utils.data import DataLoader, TensorDataset
+from ignite.contrib.handlers import PiecewiseLinear, ProgressBar
+from ignite.contrib.handlers.tensorboard_logger import (
+    OptimizerParamsHandler,
+    OutputHandler,
+    TensorboardLogger,
+)
 from ignite.engine import Engine, Events
 from ignite.handlers import ModelCheckpoint
 from ignite.metrics import Accuracy, Loss, MetricsLambda, RunningAverage
-from ignite.contrib.handlers import ProgressBar, PiecewiseLinear
-from ignite.contrib.handlers.tensorboard_logger import (
-    TensorboardLogger,
-    OutputHandler,
-    OptimizerParamsHandler,
-)
+from torch.nn.parallel import DistributedDataParallel
+from torch.utils.data import DataLoader, TensorDataset
+
+from data import get_dataset
 from pytorch_pretrained_bert import (
+    CONFIG_NAME,
+    WEIGHTS_NAME,
+    GPT2DoubleHeadsModel,
+    GPT2Tokenizer,
     OpenAIAdam,
     OpenAIGPTDoubleHeadsModel,
     OpenAIGPTTokenizer,
-    GPT2DoubleHeadsModel,
-    GPT2Tokenizer,
-    WEIGHTS_NAME,
-    CONFIG_NAME,
 )
-
-from data import get_dataset
 
 SPECIAL_TOKENS = [
     "<bos>",
@@ -454,7 +454,7 @@ def train():
             torch.nn.CrossEntropyLoss(ignore_index=-1),
             output_transform=lambda x: (x[0][0], x[1][0]),
         ),
-        "accuracy": Accuracy(output_transform=lambda x: (x[0][1], x[1][1]))
+        "accuracy": Accuracy(output_transform=lambda x: (x[0][1], x[1][1])),
     }
     metrics.update(
         {

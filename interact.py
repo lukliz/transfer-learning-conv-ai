@@ -3,24 +3,28 @@
 # This source code is licensed under the BSD-style license found in the
 # LICENSE file in the root directory of this source tree.
 import logging
-import os
 import random
 from argparse import ArgumentParser
 from itertools import chain
-from pprint import pformat
-import crayons
-import coloredlogs
 from pathlib import Path
+from pprint import pformat
 
+import coloredlogs
+import crayons
 import torch
 import torch.nn.functional as F
 
-from pytorch_pretrained_bert import OpenAIGPTLMHeadModel, OpenAIGPTTokenizer, GPT2LMHeadModel, GPT2Tokenizer
+from data import MJC_FINETUNED_MODEL, download_targz_to_folder
+from pytorch_pretrained_bert import (GPT2LMHeadModel, GPT2Tokenizer,
+                                     OpenAIGPTLMHeadModel, OpenAIGPTTokenizer)
 from train import SPECIAL_TOKENS, build_input_from_segments
-from data import download_targz_to_folder, MJC_FINETUNED_MODEL 
+
 coloredlogs.install()
 
-def top_filtering(logits, top_k=0, top_p=0.0, threshold=-float('Inf'), filter_value=-float('Inf')):
+
+def top_filtering(
+    logits, top_k=0, top_p=0.0, threshold=-float("Inf"), filter_value=-float("Inf")
+):
     """ Filter a distribution of logits using top-k, top-p (nucleus) and/or threshold filtering
         Args:
             logits: logits distribution shape (vocabulary size)
@@ -31,9 +35,11 @@ def top_filtering(logits, top_k=0, top_p=0.0, threshold=-float('Inf'), filter_va
                 the threshold top_p.
             threshold: a minimal threshold to keep logits
     """
-    assert logits.dim() == 1  # Only work for batch size 1 for now - could update but it would obfuscate a bit the code
+    assert (
+        logits.dim() == 1
+    )  # Only work for batch size 1 for now - could update but it would obfuscate a bit the code
     top_k = min(top_k, logits.size(-1))
-    if top_k > 0: 
+    if top_k > 0:
         # Remove all tokens with a probability less than the last token in the top-k tokens
         indices_to_remove = logits < torch.topk(logits, top_k)[0][..., -1, None]
         logits[indices_to_remove] = filter_value
@@ -41,7 +47,9 @@ def top_filtering(logits, top_k=0, top_p=0.0, threshold=-float('Inf'), filter_va
     if top_p > 0.0:
         # Compute cumulative probabilities of sorted tokens
         sorted_logits, sorted_indices = torch.sort(logits, descending=True)
-        cumulative_probabilities = torch.cumsum(F.softmax(sorted_logits, dim=-1), dim=-1)
+        cumulative_probabilities = torch.cumsum(
+            F.softmax(sorted_logits, dim=-1), dim=-1
+        )
 
         # Remove tokens with cumulative probability above the threshold
         sorted_indices_to_remove = cumulative_probabilities > top_p
@@ -65,10 +73,14 @@ def sample_sequence(personality, history, tokenizer, model, args, current_output
         current_output = []
 
     for i in range(args.max_length):
-        instance, sequence = build_input_from_segments(personality, history, current_output, tokenizer, with_eos=False)
+        instance, sequence = build_input_from_segments(
+            personality, history, current_output, tokenizer, with_eos=False
+        )
 
         input_ids = torch.tensor(instance["input_ids"], device=args.device).unsqueeze(0)
-        token_type_ids = torch.tensor(instance["token_type_ids"], device=args.device).unsqueeze(0)
+        token_type_ids = torch.tensor(
+            instance["token_type_ids"], device=args.device
+        ).unsqueeze(0)
 
         logits = model(input_ids, token_type_ids=token_type_ids)
 
@@ -78,7 +90,9 @@ def sample_sequence(personality, history, tokenizer, model, args, current_output
         logits = top_filtering(logits, top_k=args.top_k, top_p=args.top_p)
         probs = F.softmax(logits, dim=-1)
 
-        prev = torch.topk(probs, 1)[1] if args.no_sample else torch.multinomial(probs, 1)
+        prev = (
+            torch.topk(probs, 1)[1] if args.no_sample else torch.multinomial(probs, 1)
+        )
         if i < args.min_length and prev.item() in special_tokens_ids:
             while prev.item() in special_tokens_ids:
                 prev = torch.multinomial(probs, num_samples=1)
@@ -89,20 +103,64 @@ def sample_sequence(personality, history, tokenizer, model, args, current_output
 
     return current_output
 
+
 def run():
     parser = ArgumentParser()
-    parser.add_argument("--model", type=str, default="gpt2", help="Model type (gpt or gpt2)")
-    parser.add_argument("--model_checkpoint", type=str, default="", help="Path, url or short name of the model")
-    parser.add_argument("--max_history", type=int, default=4, help="Number of previous utterances to keep in history")
-    parser.add_argument("--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu", help="Device (cuda or cpu)")
+    parser.add_argument(
+        "--model", type=str, default="gpt2", help="Model type (gpt or gpt2)"
+    )
+    parser.add_argument(
+        "--model_checkpoint",
+        type=str,
+        default="",
+        help="Path, url or short name of the model",
+    )
+    parser.add_argument(
+        "--max_history",
+        type=int,
+        default=4,
+        help="Number of previous utterances to keep in history",
+    )
+    parser.add_argument(
+        "--device",
+        type=str,
+        default="cuda" if torch.cuda.is_available() else "cpu",
+        help="Device (cuda or cpu)",
+    )
 
-    parser.add_argument("--no_sample", action='store_true', help="Set to use greedy decoding instead of sampling")
-    parser.add_argument("--max_length", type=int, default=400, help="Maximum length of the output utterances")
-    parser.add_argument("--min_length", type=int, default=20, help="Minimum length of the output utterances")
+    parser.add_argument(
+        "--no_sample",
+        action="store_true",
+        help="Set to use greedy decoding instead of sampling",
+    )
+    parser.add_argument(
+        "--max_length",
+        type=int,
+        default=200,
+        help="Maximum length of the output utterances",
+    )
+    parser.add_argument(
+        "--min_length",
+        type=int,
+        default=20,
+        help="Minimum length of the output utterances",
+    )
     parser.add_argument("--seed", type=int, default=None, help="Seed")
-    parser.add_argument("--temperature", type=int, default=0.7, help="Sampling softmax temperature")
-    parser.add_argument("--top_k", type=int, default=0, help="Filter top-k tokens before sampling (<=0: no filtering)")
-    parser.add_argument("--top_p", type=float, default=0.9, help="Nucleus filtering (top-p) before sampling (<=0.0: no filtering)")
+    parser.add_argument(
+        "--temperature", type=int, default=0.7, help="Sampling softmax temperature"
+    )
+    parser.add_argument(
+        "--top_k",
+        type=int,
+        default=0,
+        help="Filter top-k tokens before sampling (<=0: no filtering)",
+    )
+    parser.add_argument(
+        "--top_p",
+        type=float,
+        default=0.6,
+        help="Nucleus filtering (top-p) before sampling (<=0.0: no filtering)",
+    )
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.INFO)
@@ -127,14 +185,21 @@ def run():
     model.eval()
 
     logger.info("Sample a personality")
-    model_training_args = Path(args.model_checkpoint).joinpath('model_training_args.bin')
-    training_args = torch.load(model_training_args.open('rb'))
+    model_training_args = Path(args.model_checkpoint).joinpath(
+        "model_training_args.bin"
+    )
+    training_args = torch.load(model_training_args.open("rb"))
     personalities_str = getattr(training_args, "subreddit", [])
-    personalities = [[tokenizer.convert_tokens_to_ids(tokenizer.tokenize(obj))] for obj in personalities_str]
+    personalities = [
+        [tokenizer.convert_tokens_to_ids(tokenizer.tokenize(obj))]
+        for obj in personalities_str
+    ]
     if not personalities:
-        raise FileNotFoundError(f"Could not load personalities from file {model_training_args}")
+        raise FileNotFoundError(
+            f"Could not load personalities from file {model_training_args}"
+        )
     personality = random.choice(personalities)
-    print('personalities', [tokenizer.decode(chain(*p)) for p in personalities])
+    print("personalities", [tokenizer.decode(chain(*p)) for p in personalities])
     logger.info("Selected personality: /r/%s", tokenizer.decode(chain(*personality)))
 
     history = []
@@ -145,16 +210,18 @@ def run():
             raw_text = input(f"{crayons.green('>>> ')}")
         history.append(tokenizer.encode(raw_text))
 
-        if raw_text == 'RESET':
-            print('-'*80)
+        if raw_text == "RESET":
+            print("-" * 80)
             history = []
             personality = random.choice(personalities)
-            logger.info("Selected personality: /r/%s", tokenizer.decode(chain(*personality)))
+            logger.info(
+                "Selected personality: /r/%s", tokenizer.decode(chain(*personality))
+            )
 
         with torch.no_grad():
             out_ids = sample_sequence(personality, history, tokenizer, model, args)
         history.append(out_ids)
-        history = history[-(2*args.max_history+1):]
+        history = history[-(2 * args.max_history + 1):]
         out_text = tokenizer.decode(out_ids, skip_special_tokens=True)
         print(f'{crayons.blue("robot:")}{out_text}')
 

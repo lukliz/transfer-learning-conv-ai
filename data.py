@@ -1,47 +1,48 @@
 import collections
-import random
 import copy
-# import re
-import itertools
-import pickle
-from pathlib import Path
-import logging
-import simple_cache
-import tempfile
 import html
-
-from anytree import Node
-from sklearn.model_selection import train_test_split
-from tqdm import tqdm as tqdm
-
-logger = logging.getLogger(__file__)
-
+import itertools
+import json
 import logging
+import random
 import tarfile
 import tempfile
 from pathlib import Path
 
+import simple_cache
+from anytree import Node
+from sklearn.model_selection import train_test_split
+from tqdm import tqdm as tqdm
+
 from pytorch_pretrained_bert import cached_path
 
-PERSONACHAT_URL = "http://publicmldatasets.thinkcds.com/transfer-learning-conv-ai/20190714_reddit_threads_json.tar.gz"
+logger = logging.getLogger(__file__)
+
+
+PERSONACHAT_URL = "http://publicmldatasets.thinkcds.com/transfer-learning-conv-ai/20190714b_reddit_threads_json.tar.gz"
 MJC_FINETUNED_MODEL = "http://publicmldatasets.thinkcds.com/transfer-learning-conv-ai/Jul13_18-24-35_mjcdesktop.tar.gz"
 
 logger = logging.getLogger(__file__)
+
 
 def download_targz_to_folder(url):
     """ Download and extract finetuned model from S3 """
     resolved_archive_file = cached_path(url)
     tempdir = tempfile.mkdtemp()
 
-    logger.info("extracting archive file {} to temp dir {}".format(resolved_archive_file, tempdir))
-    with tarfile.open(resolved_archive_file, 'r:gz') as archive:
+    logger.info(
+        "extracting archive file {} to temp dir {}".format(
+            resolved_archive_file, tempdir
+        )
+    )
+    with tarfile.open(resolved_archive_file, "r:gz") as archive:
         archive.extractall(tempdir)
     return tempdir
 
 
 def format_reddit_thing(thing, submission_id):
     """Format a dict of comment or submisson data."""
-    
+
     if thing["type"] == "submission":
         text = "\n".join([thing["title"], thing.get("selftext", "")])
     else:
@@ -185,7 +186,9 @@ def load_utterances(personality, files, tokenizer, max_seq_len, num_candidates=1
             list(itertools.chain(*list(thread["comment_dict"].values())))
         )
         if comments_all > 1000:
-            logger.debug(f"Skipping {personality} thread with many ({comments_all}) comments")
+            logger.debug(
+                f"Skipping {personality} thread with many ({comments_all}) comments"
+            )
             continue
         try:
             nodes_by_id, thing_by_id = thread2tree(
@@ -233,7 +236,8 @@ def load_utterances(personality, files, tokenizer, max_seq_len, num_candidates=1
                     lambda x: not x.get("stickied", False),
                     # Short comments are low information and too easy
                     lambda x: len(x.get("body", "")) > 20,
-                    lambda x: len(x.get("body", "")) < 280, # Ones that are too long don't do well sometimes, tweet length
+                    lambda x: len(x.get("body", ""))
+                    < 280,  # Ones that are too long don't do well sometimes, tweet length
                 ]
                 # TODO try filtering out replies that overlap too much with history. This avoid repitative qouting and answers
                 for f in filters:
@@ -301,12 +305,10 @@ def threads_to_utterances(splits, tokenizer, max_seq_len):
     return dataset2
 
 
-def get_dataset(
-    tokenizer, data_path, subreddits=[], max_seq_len=None
-):
+def get_dataset(tokenizer, data_path, subreddits=[], max_seq_len=None):
 
     max_seq_len = max_seq_len or tokenizer.max_len
-    if data_path=="":
+    if data_path == "":
         data_dir = download_targz_to_folder(PERSONACHAT_URL)
     data_dir = Path(data_path)
 
