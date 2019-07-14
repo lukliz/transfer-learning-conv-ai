@@ -263,10 +263,10 @@ for subreddit in args.subreddit:
                                 )
 
                             # pickle so we will have original data if wanted, that way we can make changes to input data formatting
-                            out_pkl = out_dir.joinpath(submission_id + ".pickle")
-                            pickle.dump(
+                            out_pkl = out_dir.joinpath(submission_id + ".json")
+                            json.dump(
                                 dict(submission=submission, comment_dict=comment_dict),
-                                out_pkl.open("wb"),
+                                out_pkl.open("w"),
                             )
                             logger.debug("writing pickle %s", out_pkl)
 

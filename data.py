@@ -152,7 +152,7 @@ def load_utterances(personality, files, tokenizer, max_seq_len, num_candidates=1
     for file in tqdm(files, desc=f"Loading {personality}", unit="thread"):
         # load
         try:
-            thread = pickle.load(file.open("rb"))
+            thread = json.load(file.open("r"))
         except Exception as e:
             logger.warning(f"Exception opening {file}, {e}")
             file.unlink()
