@@ -591,3 +591,49 @@ to: transfer scraped data to ec2
 2019-07-13 03:50:58 ip-172-31-39-133 pytorch_pretrained_bert.optimization[7422] WARNING t_total value of -1 results in schedule not being applied
 
 - It definitly seems that text only subs are better, and ones with conversations. Roasts is bad because they are all refering back to the picture. And also because the speaker depends a lot, wether it's op or not. Maybe I should remove ops replies.
+##  2019-07-14 10:45:20
+
+Putting up tar.gz model and data
+
+```
+2019-07-14 07:05:36 mjcdesktop train.py[28437] INFO <bos>jokes<speaker2>OMG is this OC?  
+
+*jizzes in pants*
+
+Never mind.<speaker1>You blonde?
+
+Never mind. 
+
+<speaker2>Will this become a new running joke on this sub?    
+Nevermind<speaker1>not with this attitude.<speaker2>nevermind  
+
+
+nevermind<speaker1>N
+Nevermind<speaker2>“Be that word our sign of parting, bird or fiend!” I shrieked, upstarting—
+
+“Get thee back into the tempest and the Night’s Plutonian shore!
+
+    Leave no black plume as a token of that lie thy soul hath spoken!
+
+    Leave my loneliness unbroken!—quit the bust above my door!
+
+Take thy beak from out my heart, and take thy form from off my door!”
+
+            Quoth the Raven “Nevermo-"
+
+Nevermind.<speaker1>- Edgar Allenevermind<speaker2>Nirvava - Nevermind<speaker1>Ha I get the refer-
+
+nevermind<eos><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad><pad>
+2019-07-14 07:05:36 mjcdesktop ignite.engine.engine.Engine[28437] INFO Epoch[1] Complete. Time taken: 00:22:56
+Validation: {'accuracy': 0.48456632653061227,                                                                                                                                                 
+ 'average_accuracy': 0.48456632653061227,
+ 'average_nll': 3.3581543455071445,
+ 'average_ppl': 28.73610498393082,
+ 'nll': 3.3581543455071445}
+Epoch [3/3]: [71520/71520] 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████, loss=1.12e-01 [4:11:41<00:00]2019-07-14 07:05:36 mjcdesktop ignite.engine.engine.Engine[28437] INFO Engine run complete. Time taken 00:22:56
+
+2019-07-14 07:05:37 mjcdesktop ignite.engine.engine.Engine[28437] INFO Engine run complete. Time taken 12:41:01
+```
+
+
+

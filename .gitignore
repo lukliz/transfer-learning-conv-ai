@@ -1,6 +1,7 @@
 .vscode
 /experiments/
 /data/
+/data
 /dataset_cache*
 /runs/
 ParlAI/

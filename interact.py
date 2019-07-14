@@ -8,15 +8,16 @@ import random
 from argparse import ArgumentParser
 from itertools import chain
 from pprint import pformat
-from colored import fg, bg, attr
+import crayons
 import coloredlogs
+from pathlib import Path
 
 import torch
 import torch.nn.functional as F
 
 from pytorch_pretrained_bert import OpenAIGPTLMHeadModel, OpenAIGPTTokenizer, GPT2LMHeadModel, GPT2Tokenizer
 from train import SPECIAL_TOKENS, build_input_from_segments
-from utils import get_dataset_personalities, download_pretrained_model 
+from data import download_targz_to_folder, MJC_FINETUNED_MODEL 
 coloredlogs.install()
 
 def top_filtering(logits, top_k=0, top_p=0.0, threshold=-float('Inf'), filter_value=-float('Inf')):
@@ -90,8 +91,6 @@ def sample_sequence(personality, history, tokenizer, model, args, current_output
 
 def run():
     parser = ArgumentParser()
-    parser.add_argument("--dataset_path", type=str, default="", help="Path or url of the dataset. If empty download from S3.")
-    parser.add_argument("--dataset_cache", type=str, default='./dataset_cache', help="Path or url of the dataset cache")
     parser.add_argument("--model", type=str, default="gpt2", help="Model type (gpt or gpt2)")
     parser.add_argument("--model_checkpoint", type=str, default="", help="Path, url or short name of the model")
     parser.add_argument("--max_history", type=int, default=4, help="Number of previous utterances to keep in history")
@@ -111,7 +110,7 @@ def run():
     logger.info(pformat(args))
 
     if args.model_checkpoint == "":
-        args.model_checkpoint = download_pretrained_model()
+        args.model_checkpoint = download_targz_to_folder(MJC_FINETUNED_MODEL)
 
     if args.seed is not None:
         random.seed(args.seed)
@@ -128,23 +127,22 @@ def run():
     model.eval()
 
     logger.info("Sample a personality")
-    training_args = torch.load(open(os.path.join(args.model_checkpoint, 'model_training_args.bin'), 'rb'))
+    model_training_args = Path(args.model_checkpoint).joinpath('model_training_args.bin')
+    training_args = torch.load(model_training_args.open('rb'))
     personalities_str = getattr(training_args, "subreddit", [])
     personalities = [[tokenizer.convert_tokens_to_ids(tokenizer.tokenize(obj))] for obj in personalities_str]
-    if personalities:
-        logger.info("Loaded personalities from model_training_args.bin %s", personalities_str)
-    else:
-        personalities = get_dataset_personalities(tokenizer, args.dataset_path, args.dataset_cache)
+    if not personalities:
+        raise FileNotFoundError(f"Could not load personalities from file {model_training_args}")
     personality = random.choice(personalities)
     print('personalities', [tokenizer.decode(chain(*p)) for p in personalities])
     logger.info("Selected personality: /r/%s", tokenizer.decode(chain(*personality)))
 
     history = []
     while True:
-        raw_text = input(f"{fg(1)}human: {attr(0)}")
+        raw_text = input(f"{crayons.green('>>> ')}")
         while not raw_text:
-            print('Prompt should not be empty!')
-            raw_text = input(f"{fg(1)}human: {attr(0)}")
+            print(f"\n{crayons.red('Prompt should not be empty!')}")
+            raw_text = input(f"{crayons.green('>>> ')}")
         history.append(tokenizer.encode(raw_text))
 
         if raw_text == 'RESET':
@@ -158,7 +156,7 @@ def run():
         history.append(out_ids)
         history = history[-(2*args.max_history+1):]
         out_text = tokenizer.decode(out_ids, skip_special_tokens=True)
-        print(f'{fg(6)}robot: {attr(0)}{out_text}')
+        print(f'{crayons.blue("robot:")}{out_text}')
 
 
 if __name__ == "__main__":

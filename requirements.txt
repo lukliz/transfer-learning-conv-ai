@@ -1,20 +1,19 @@
 torch>1.0.0
 # Until 0.6.3 is out we can use this pip install from the github repo
 git+https://github.com/huggingface/pytorch-pretrained-BERT.git@78462aad6113d50063d8251e27dbaadb7f44fbf0
-# OR later pytorch-pretrained-bert>0.6.2
+# for GPT v1 used 0.6.2 instead
 # We also need that latest git versions of these
 git+https://github.com/lanpa/tensorboardX@53bb375
+#tensorboardX>=1.6
 git+https://github.com/pytorch/ignite.git@c92838c9
 #pytorch-ignite>=0.2.0 
-#tensorboardX>=1.6
 tensorflow  # for tensorboardX
 anytree
 scikit-learn
 tqdm
 colorlogs
-colored
+crayons
 pandas
 psaw
 coloredlogs
-ipdb
 simple_cache

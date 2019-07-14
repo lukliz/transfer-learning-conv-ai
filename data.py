@@ -16,6 +16,28 @@ from tqdm import tqdm as tqdm
 
 logger = logging.getLogger(__file__)
 
+import logging
+import tarfile
+import tempfile
+from pathlib import Path
+
+from pytorch_pretrained_bert import cached_path
+
+PERSONACHAT_URL = "http://publicmldatasets.thinkcds.com/transfer-learning-conv-ai/20190714_reddit_threads_json.tar.gz"
+MJC_FINETUNED_MODEL = "http://publicmldatasets.thinkcds.com/transfer-learning-conv-ai/Jul13_18-24-35_mjcdesktop.tar.gz"
+
+logger = logging.getLogger(__file__)
+
+def download_targz_to_folder(url):
+    """ Download and extract finetuned model from S3 """
+    resolved_archive_file = cached_path(url)
+    tempdir = tempfile.mkdtemp()
+
+    logger.info("extracting archive file {} to temp dir {}".format(resolved_archive_file, tempdir))
+    with tarfile.open(resolved_archive_file, 'r:gz') as archive:
+        archive.extractall(tempdir)
+    return tempdir
+
 
 def format_reddit_thing(thing, submission_id):
     """Format a dict of comment or submisson data."""
@@ -284,6 +306,8 @@ def get_dataset(
 ):
 
     max_seq_len = max_seq_len or tokenizer.max_len
+    if data_path=="":
+        data_dir = download_targz_to_folder(PERSONACHAT_URL)
     data_dir = Path(data_path)
 
     splits = collect_thread_files(data_dir, subreddits)

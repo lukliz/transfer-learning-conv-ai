@@ -75,11 +75,14 @@ human: Correct, thank you. We humans should always be correct
   - [x] Remove short comments
   - [x] remove mod comments
   - [x] fix distractors
-  - [ ] prevent qouting and repetative data
   - [x] Restrict to specific subreddit
   - [x] Try GPT2 medium on a V100 (needed lower sequence length)
-- [ ] Data
-  - [ ] Scrape to one big file, perhaps sqllite or jsonl
+  - [ ] prevent qouting and repetative data
+  - [ ] prevent repition during beam search
+- [ ] Datad
+  - [x] Scrape to json
+  - [x] Download data and finetuned model
+  - [ ] Perhaps change <speaker1> <speaker2> tokens to correspond actual reddit users e.g. <op><self><other>
 - [ ] Deploy: if good results,
   - [ ] interact with it on IRC/slack
 
