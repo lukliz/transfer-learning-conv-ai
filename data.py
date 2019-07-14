@@ -7,6 +7,7 @@ import logging
 import random
 import tarfile
 import tempfile
+from fuzzywuzzy import fuzz
 from pathlib import Path
 
 import simple_cache
@@ -232,13 +233,18 @@ def load_utterances(personality, files, tokenizer, max_seq_len, num_candidates=1
                     lambda x: "[deleted]" not in x.get("body", ""),
                     lambda x: "[removed]" not in x.get("body", ""),
                     lambda x: x.get("author", "") != "[removed]",
+
                     # Filter out the repetative mod and sticky comments
                     lambda x: x.get("author", "") != "AutoModerator",
                     lambda x: not x.get("stickied", False),
+
                     # Short comments are low information and too easy
                     lambda x: len(x.get("body", "")) > 20,
                     lambda x: len(x.get("body", ""))
                     < 280,  # Ones that are too long don't do well sometimes, tweet length
+
+                    # the output tends to be repetitive and loop, lets avoid that a bit by filtering out repetative replies
+                    lambda x: all([fuzz.ratio(x.get("body", ""), h)<75 for h in history])
                 ]
                 # TODO try filtering out replies that overlap too much with history. This avoid repitative qouting and answers
                 for f in filters:
