@@ -4,9 +4,14 @@ This repo uses reddit data from pushshift.io to create a chat bot. It's like the
 
 - clone the repo `git clone https://github.com/wassname/transfer-learning-conv-ai.git`
 - install the requirements in `requirements.txt` you will need `pytorch-pretrained-bert>0.6.2` which may be the latest git release
-- get data with `fetch_pushshift_data.py` (run overnight)
-- with a nvidia 2080 ti you can run with `python -m ipdb train.py --dataset_path ./data/reddit_threads --fp16 O2 --gradient_accumulation_steps 32 --train_batch_size 1 --valid_batch_size 1 --n_epochs 3`
-- interact with `python interact.py --device cpu --dataset_path ./data/reddit_threads --model_checkpoint runs/Jul09_15-44-47_mjcdesktop/`
+- (optional) get data with `fetch_pushshift_data.py` (run overnight)
+- with a nvidia 2080 ti you can run:
+  - gpt2-small with `python -m ipdb train.py --model_checkpoint gpt2 --fp16 O2 --gradient_accumulation_steps 32 --train_batch_size 1 --valid_batch_size 1 --n_epochs 3`
+    - If you leave the data path empty, it will download data from s3
+  - gpt2-medium with `python -m ipdb train.py --model_checkpoint gpt2-medium --max_seq_len 750 --dataset_path ./data/reddit_threads --fp16 O2 --gradient_accumulation_steps 32 --train_batch_size 1 --valid_batch_size 1 --n_epochs 3`
+- interact with 
+  - `python interact.py --device cpu --dataset_path ./data/reddit_threads` which will download a pretrained model
+  - `python interact.py --device cpu --dataset_path ./data/reddit_threads --model_checkpoint runs/<run_name>` for you own run
 
 If you want me to share the dataset and a pretrained model, just ask in the issues. I'm hesitant to do the work to share it if no one wants it.
 
@@ -110,17 +115,17 @@ It will be a 700mb download with around 8GB of json data. Alternativly you can g
   - [x] fix distractors
   - [x] Restrict to specific subreddit
   - [x] Try GPT2 medium on a V100 (needed lower sequence length)
-  - [ ] prevent qouting and repetative data
+  - [ ] prevent or decode qouting and repetitive data
   - [ ] prevent repition during beam search
-- [ ] Datad
-  - [x] Scrape to json
+  - [x] avoid loop in interaction
+- [ ] Data
   - [x] Download data and finetuned model
   - [ ] Perhaps change <speaker1> <speaker2> tokens to correspond actual reddit users e.g. <op><self><other>
 - [ ] Deploy: if good results,
   - [ ] interact with it on IRC/slack
 
 
-## Errors:
+## Troubleshooting:
 
 - `2019-07-10 02:35:49 ip-172-31-39-133 ignite.engine.engine.Engine[7647] ERROR Engine run is terminating due to exception: Creating MTGP constants failed. at /opt/conda/conda-bld/pytorch_1556653099582/work/aten/src/THC/THCTensorRandom.cu:33.  `
   - This means your GPU is full, reduce batch size or get a GPU with more ram

@@ -19,7 +19,9 @@ from pytorch_pretrained_bert import (GPT2LMHeadModel, GPT2Tokenizer,
                                      OpenAIGPTLMHeadModel, OpenAIGPTTokenizer)
 from train import SPECIAL_TOKENS, build_input_from_segments
 
-# coloredlogs.install()
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__file__)
+coloredlogs.install()
 
 
 def top_filtering(
@@ -94,8 +96,12 @@ def sample_sequence(personality, history, tokenizer, model, args, current_output
             torch.topk(probs, 1)[1] if args.no_sample else torch.multinomial(probs, 1)
         )
         if i < args.min_length and prev.item() in special_tokens_ids:
-            while prev.item() in special_tokens_ids:
-                prev = torch.multinomial(probs, num_samples=1)
+            # Sometimes the model fails to abide by the min output length, lets try only 20 times to avoid a inf loop
+            for j in range(20):
+                if prev.item() in special_tokens_ids:
+                    prev = torch.multinomial(probs, num_samples=1)
+                else:
+                    break
 
         if prev.item() in special_tokens_ids:
             break
@@ -200,7 +206,7 @@ def run():
         )
     personality = random.choice(personalities)
     print("personalities", [tokenizer.decode(chain(*p)) for p in personalities])
-    logger.info("Selected personality: /r/%s", tokenizer.decode(chain(*personality)))
+    logger.info("Selected personality: /r/%s. use 'RESET' to change", tokenizer.decode(chain(*personality)))
 
     history = []
     while True:

@@ -636,4 +636,6 @@ Epoch [3/3]: [71520/71520] 100%|████████████████
 ```
 
 
-
+It looks like interact has a couple of problems:
+- P search sometimes goes forever, I'm guess when it's not confident
+- It loops
