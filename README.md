@@ -67,6 +67,39 @@ robot: I AM SCREAMING FELLOW HUMAN. I WAS SCREAMING FELLOW HUMAN.
 human: Correct, thank you. We humans should always be correct
 ```
 
+## Data
+
+If you don't provide a data directory, data will automatically be downloaded, with threads from these subreddits.
+
+```
+        18 threads from /r/psychonauts
+        37 threads from /r/ShowerThoughts
+       102 threads from /r/aww
+       200 threads from /r/theonion
+       159 threads from /r/roast_me
+        35 threads from /r/funny
+      1822 threads from /r/singularity
+      1475 threads from /r/RoastMe
+      1500 threads from /r/truereddit
+       507 threads from /r/dreams
+      1951 threads from /r/moviescirclejerk
+       977 threads from /r/bestof
+      1489 threads from /r/programmingcirclejerk
+       996 threads from /r/totallynotrobots
+      1363 threads from /r/machinelearning
+      1454 threads from /r/whowouldwin
+      1303 threads from /r/copypasta
+      1477 threads from /r/nosleep
+       329 threads from /r/emojipasta
+      1134 threads from /r/shittyaskscience
+      1182 threads from /r/Scotland
+       169 threads from /r/jokes
+```
+
+It will be a 700mb download with around 8GB of json data. Alternativly you can gather your own with fetch_pushshift_data.py.
+
+
+
 ## TODO:
 
 - [ ] Get better results

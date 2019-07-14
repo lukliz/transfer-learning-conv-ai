@@ -1,11 +1,11 @@
-"""Get data from pushshift and put into a pickle."""
+"""Get data from pushshift and put into a pickles."""
 
 
 import argparse
 import collections
 import copy
 import itertools
-import json
+import pickle
 import logging
 import os
 import random
@@ -260,13 +260,13 @@ for subreddit in args.subreddit:
                                     key=lambda x: x.get("score", 0), reverse=True
                                 )
 
-                            # pickle so we will have original data if wanted, that way we can make changes to input data formatting
-                            out_pkl = out_dir.joinpath(submission_id + ".json")
-                            json.dump(
+                            # json it so we will have original data if wanted, that way we can make changes to input data formatting
+                            out_jsn = out_dir.joinpath(submission_id + ".pickle")
+                            pickle.dump(
                                 dict(submission=submission, comment_dict=comment_dict),
-                                out_pkl.open("w"),
+                                out_jsn.open("wb"),
                             )
-                            logger.debug("writing pickle %s", out_pkl)
+                            logger.debug("writing pickle %s", out_jsn)
 
                             # format
                             # text = format_comments_dict(comment_dict, submission)

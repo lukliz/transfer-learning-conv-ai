@@ -32,7 +32,7 @@ I thought about formatting it using special  chars etc, but I decide it would be
   - [x] remove the ids, we don't need it in this format
 - [x] interact
 - [x] remove [remove] and [deleted] as well as mod flaired messaged
-wishlist: save in json not pickle., append to jsonl, make the download script work better by getting a wekek at a time
+- [x] wishlist: save in json not pickle., append to jsonl, make the download script work better by getting a week at a time
 
 Look like I can't fit it into mem, need to use a cloud gpu!
 `python train.py --dataset_path ./data/reddit_threads --fp16 O3 --gradient_accumulation_steps 8 --train_batch_size 1 --valid_batch_size 1`

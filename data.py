@@ -2,7 +2,7 @@ import collections
 import copy
 import html
 import itertools
-import json
+import pickle
 import logging
 import random
 import tarfile
@@ -19,7 +19,7 @@ from pytorch_pretrained_bert import cached_path
 logger = logging.getLogger(__file__)
 
 
-PERSONACHAT_URL = "http://publicmldatasets.thinkcds.com/transfer-learning-conv-ai/20190714b_reddit_threads_json.tar.gz"
+PERSONACHAT_URL = "http://publicmldatasets.thinkcds.com/transfer-learning-conv-ai/20190715_reddit_threads_pickle.tar.gz"
 MJC_FINETUNED_MODEL = "http://publicmldatasets.thinkcds.com/transfer-learning-conv-ai/Jul13_18-24-35_mjcdesktop.tar.gz"
 
 logger = logging.getLogger(__file__)
@@ -95,7 +95,7 @@ def thread2tree(comment_dict, submission):
 
 
 def collect_thread_files(data_dir, subreddits):
-    """Collect pickled thread files and split into train, val, test.
+    """Collect pickle thread files and split into train, val, test.
     
     """
     subreddit_paths = [d for d in data_dir.glob("*/") if d.is_dir()]
@@ -126,7 +126,7 @@ def collect_thread_files(data_dir, subreddits):
     num_train_examples = len(list(itertools.chain(*list(splits["train"].values()))))
     if len(splits["train"]) == 0 or num_train_examples < 10:
         raise Exception(
-            "not enougth training data found. Check your dataset_path and your --subreddits argument"
+            f"not enougth training data found in '{data_dir}'. Check your dataset_path and your --subreddits argument"
         )
     return splits
 
@@ -175,10 +175,9 @@ def load_utterances(personality, files, tokenizer, max_seq_len, num_candidates=1
     for file in tqdm(files, desc=f"Loading {personality}", unit="thread"):
         # load
         try:
-            thread = json.load(file.open("r"))
+            thread = pickle.load(file.open("rb"))
         except Exception as e:
             logger.warning(f"Exception opening {file}, {e}")
-            file.unlink()
             continue
 
         # Anytree seems to be v. slow of theads with lots of comments (>1000)
@@ -194,9 +193,11 @@ def load_utterances(personality, files, tokenizer, max_seq_len, num_candidates=1
             nodes_by_id, thing_by_id = thread2tree(
                 thread["comment_dict"], thread["submission"]
             )
-        except Exception as e:
-            logger.warn("Exception for file '%s', '%s'", file, e)
-            file.unlink()
+        except IndexError as e:
+            logger.warn("IndexError for file '%s', '%s'", file, e)
+            continue
+        except KeyError as e:
+            logger.warn("KeyError for file '%s', '%s'", file, e)
             continue
 
         # get utterances
@@ -309,8 +310,9 @@ def get_dataset(tokenizer, data_path, subreddits=[], max_seq_len=None):
 
     max_seq_len = max_seq_len or tokenizer.max_len
     if data_path == "":
-        data_dir = download_targz_to_folder(PERSONACHAT_URL)
+        data_path = download_targz_to_folder(PERSONACHAT_URL)
     data_dir = Path(data_path)
+    print('data_dir', data_dir)
 
     splits = collect_thread_files(data_dir, subreddits)
 

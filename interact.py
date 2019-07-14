@@ -107,7 +107,7 @@ def sample_sequence(personality, history, tokenizer, model, args, current_output
 def run():
     parser = ArgumentParser()
     parser.add_argument(
-        "--model", type=str, default="gpt2", help="Model type (gpt or gpt2)"
+        "--model", type=str, default="gpt2-medium", help="Model type (gpt or gpt2)"
     )
     parser.add_argument(
         "--model_checkpoint",
@@ -206,7 +206,7 @@ def run():
     while True:
         raw_text = input(f"{crayons.green('>>> ')}")
         while not raw_text:
-            print(f"\n{crayons.red('Prompt should not be empty!')}")
+            print(f"{crayons.red('Prompt should not be empty!')}")
             raw_text = input(f"{crayons.green('>>> ')}")
         history.append(tokenizer.encode(raw_text))
 
