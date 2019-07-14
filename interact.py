@@ -13,10 +13,15 @@ import coloredlogs
 import crayons
 import torch
 import torch.nn.functional as F
+from fuzzywuzzy import fuzz
 
 from data import MJC_FINETUNED_MODEL, download_targz_to_folder
-from pytorch_pretrained_bert import (GPT2LMHeadModel, GPT2Tokenizer,
-                                     OpenAIGPTLMHeadModel, OpenAIGPTTokenizer)
+from pytorch_pretrained_bert import (
+    GPT2LMHeadModel,
+    GPT2Tokenizer,
+    OpenAIGPTLMHeadModel,
+    OpenAIGPTTokenizer,
+)
 from train import SPECIAL_TOKENS, build_input_from_segments
 
 logging.basicConfig(level=logging.INFO)
@@ -69,7 +74,10 @@ def top_filtering(
     return logits
 
 
-def sample_sequence(personality, history, tokenizer, model, args, current_output=None):
+def sample_sequence(
+    personality, history, tokenizer, model, args, current_output=None, temperature=None
+):
+    temperature = temperature or args.temperature
     special_tokens_ids = tokenizer.convert_tokens_to_ids(SPECIAL_TOKENS)
     if current_output is None:
         current_output = []
@@ -108,6 +116,36 @@ def sample_sequence(personality, history, tokenizer, model, args, current_output
         current_output.append(prev.item())
 
     return current_output
+
+
+# try a way to filter out repetition
+def how_repetitive(out_ids, history, tokenizer):
+    if not history:
+        return 0
+    out_text = tokenizer.decode(out_ids, skip_special_tokens=True)
+    history_text = [tokenizer.decode(h) for h in history]
+    return max([fuzz.ratio(out_text, h) for h in history_text]) / 100
+
+
+def sample_sequence_no_looping(personality, history, tokenizer, model, args):
+    """
+    Simple hack to avoid repetitive statements.
+    
+    Going a fuzzy string comparison with history and repeating untill it is low.
+    """
+    temperature = args.temperature
+    found = 0
+    for j in range(20):
+        out_ids = sample_sequence(
+            personality, history, tokenizer, model, args, temperature=temperature
+        )
+        temperature *= 1.2
+        if how_repetitive(out_ids, history, tokenizer) < 0.4:
+            found = 1
+            break
+    if not found:
+        logger.warning(f"Could not prevent a repetitive statement given 10 tries. temperature {temperature}")
+    return out_ids
 
 
 def run():
@@ -206,7 +244,10 @@ def run():
         )
     personality = random.choice(personalities)
     print("personalities", [tokenizer.decode(chain(*p)) for p in personalities])
-    logger.info("Selected personality: /r/%s. use 'RESET' to change", tokenizer.decode(chain(*personality)))
+    logger.info(
+        "Selected personality: /r/%s. use 'RESET' to change",
+        tokenizer.decode(chain(*personality)),
+    )
 
     history = []
     while True:
@@ -225,9 +266,11 @@ def run():
             )
 
         with torch.no_grad():
-            out_ids = sample_sequence(personality, history, tokenizer, model, args)
+            out_ids = sample_sequence_no_looping(
+                personality, history, tokenizer, model, args
+            )
         history.append(out_ids)
-        history = history[-(2 * args.max_history + 1):]
+        history = history[-(2 * args.max_history + 1) :]
         out_text = tokenizer.decode(out_ids, skip_special_tokens=True)
         print(f'{crayons.blue("robot:")}{out_text}')
 
