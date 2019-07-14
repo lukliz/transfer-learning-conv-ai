@@ -76,8 +76,8 @@ human: Correct, thank you. We humans should always be correct
   - [x] remove mod comments
   - [x] fix distractors
   - [ ] prevent qouting and repetative data
-  - [ ] Restrict to specific subreddit
-  - [ ] Try GPT2 medium on colab (wait for pytorch+TPU)
+  - [x] Restrict to specific subreddit
+  - [x] Try GPT2 medium on a V100 (needed lower sequence length)
 - [ ] Data
   - [ ] Scrape to one big file, perhaps sqllite or jsonl
 - [ ] Deploy: if good results,
@@ -90,6 +90,7 @@ human: Correct, thank you. We humans should always be correct
   - This means your GPU is full, reduce batch size or get a GPU with more ram
 - `TypeError: __init__() got an unexpected keyword argument 'log_dir`
   - This is a tensorflowX vs ignite version problem, [see this github issue](https://github.com/pytorch/ignite/issues/534), and try new or old versions of these packages.
+- Set special tokens does not exist (or something). This is likely because you don't have the right version of `pytorch-pretrained-BERT` (the right version is in requirements.txt), or you tried to use  `--model_checkpoint gpt` instead of gpt2. GPT is not working you would have to revert to v0.6.2, but you might as well just use gpt2
 
 -----
 
