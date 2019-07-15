@@ -400,6 +400,12 @@ def train():
     # Evaluation function and evaluator (evaluator output is the input of the metrics)
     def inference(engine, batch):
         model.eval()
+
+        # Clear cache to avoid memory overflow on eval step
+        import gc
+        gc.collect()
+        torch.cuda.empty_cache()
+        
         with torch.no_grad():
             batch = tuple(input_tensor.to(args.device) for input_tensor in batch)
             input_ids, mc_token_ids, lm_labels, mc_labels, token_type_ids = batch
@@ -455,19 +461,21 @@ def train():
         "nll": Loss(
             torch.nn.CrossEntropyLoss(ignore_index=-1),
             output_transform=lambda x: (x[0][0], x[1][0]),
-        ),
-        "accuracy": Accuracy(output_transform=lambda x: (x[0][1], x[1][1])),
+        )
     }
     metrics.update(
-        {
-            "average_nll": MetricsLambda(
-                average_distributed_scalar, metrics["nll"], args
-            ),
-            "average_accuracy": MetricsLambda(
-                average_distributed_scalar, metrics["accuracy"], args
-            ),
-        }
+        {"average_nll": MetricsLambda(average_distributed_scalar, metrics["nll"], args)}
     )
+    if args.num_candidates > 1:
+        metrics["accuracy"] = Accuracy(output_transform=lambda x: (x[0][1], x[1][1]))
+        metrics.update(
+            {
+                "average_accuracy": MetricsLambda(
+                    average_distributed_scalar, metrics["accuracy"], args
+                )
+            }
+        )
+
     metrics["average_ppl"] = MetricsLambda(math.exp, metrics["average_nll"])
     for name, metric in metrics.items():
         metric.attach(evaluator, name)
