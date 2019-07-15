@@ -403,7 +403,6 @@ def train():
         with torch.no_grad():
             batch = tuple(input_tensor.to(args.device) for input_tensor in batch)
             input_ids, mc_token_ids, lm_labels, mc_labels, token_type_ids = batch
-            logger.info(tokenizer.decode(input_ids[0, -1, :].tolist()))
             model_outputs = model(
                 input_ids, mc_token_ids, token_type_ids=token_type_ids
             )
@@ -411,6 +410,8 @@ def train():
                 model_outputs[0],
                 model_outputs[1],
             )  # So we can also use GPT2 outputs
+            logger.info('inputs : %s', tokenizer.decode(input_ids[0, -1,:].tolist()))
+            logger.info('outputs: %s', tokenizer.decode(lm_logits[0, -1, :].argmax(-1).tolist()))
             lm_logits_flat_shifted = (
                 lm_logits[..., :-1, :].contiguous().view(-1, lm_logits.size(-1))
             )
