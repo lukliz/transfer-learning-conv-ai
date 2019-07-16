@@ -170,6 +170,11 @@ def cache_load_utturances(ttl=360000):
     return decorate
 
 
+def authors2ints(authors):
+    # e.g. authors = ['paul', 'dan', 'mike', 'iv', 'iv', 'dan']
+    author2int = dict((v,k) for k,v in enumerate(set(authors)))
+    return [str(author2int[author]) for author in authors]
+
 @cache_load_utturances()
 def load_utterances(personality, files, tokenizer, max_seq_len, num_candidates=10):
     utterances = []
@@ -210,10 +215,14 @@ def load_utterances(personality, files, tokenizer, max_seq_len, num_candidates=1
                 and len(current_node.path) > 1  # It must have some parent comments
                 and len(current_node.children) >= 1  # And child comments
             ):
+                history_things = [thing_by_id[node.name] for node in current_node.path]
                 history = [
-                    format_reddit_thing(thing_by_id[node.name], submission_id)
-                    for node in current_node.path
+                    format_reddit_thing(thing, submission_id)
+                    for thing in history_things
                 ]
+
+                # Remember each author, but as an int
+                authors = authors2ints([thing['author'] for thing in history_things])
 
                 replies = [thing_by_id[node.name] for node in current_node.children]
 
@@ -244,7 +253,7 @@ def load_utterances(personality, files, tokenizer, max_seq_len, num_candidates=1
                     < 280,  # Ones that are too long don't do well sometimes, tweet length
 
                     # the output tends to be repetitive and loop, lets avoid that a bit by filtering out repetative replies
-                    lambda x: all([fuzz.ratio(x.get("body", ""), h)<75 for h in history])
+                    lambda x: max([fuzz.ratio(x.get("body", ""), h)/100 for h in history]) < 0.75
                 ]
                 # TODO try filtering out replies that overlap too much with history. This avoid repitative qouting and answers
                 for f in filters:
@@ -270,7 +279,7 @@ def load_utterances(personality, files, tokenizer, max_seq_len, num_candidates=1
                             reply
                         ]
 
-                        utterance = dict(candidates=candidates, history=history)
+                        utterance = dict(candidates=candidates, history=history, authors=authors)
                         utterance = tokenize(utterance, tokenizer, max_seq_len)
                         utterances.append(utterance)
             else:
