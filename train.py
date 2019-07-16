@@ -48,10 +48,12 @@ PADDED_INPUTS = ["input_ids", "lm_labels", "token_type_ids"]
 
 logger = logging.getLogger(__file__)
 
+
 def clear_mem():
     # Clear cache to avoid memory overflow on eval step
     gc.collect()
     torch.cuda.empty_cache()
+
 
 def average_distributed_scalar(scalar, args):
     """ Average a scalar over the nodes if we are in distributed training. We use this for distributed evaluation. """
@@ -93,10 +95,19 @@ def _truncate_seq_pair_n(tokens, max_length):
 
 
 def build_input_from_segments(
-    persona, history, reply, authors, tokenizer, lm_labels=False, with_eos=True, max_len=None
+    persona,
+    history,
+    reply,
+    authors,
+    tokenizer,
+    lm_labels=False,
+    with_eos=True,
+    max_len=None,
 ):
     """ Build a sequence of input from 3 segments: persona, history and last reply """
-    bos, eos, speaker_partner, speaker_self, speaker_other = tokenizer.convert_tokens_to_ids(SPECIAL_TOKENS[:-1])
+    bos, eos, speaker_partner, speaker_other, speaker_self = tokenizer.convert_tokens_to_ids(
+        SPECIAL_TOKENS[:-1]
+    )
     if max_len is None:
         max_len = tokenizer.max_len
 
@@ -112,11 +123,7 @@ def build_input_from_segments(
     reply_c = sequence[-1]
 
     # Convert authors to tokens
-    authors = utterance["authors"]
-    author2token = {
-        authors[-1][0]: speaker_partner,
-        authors[-2][0]: speaker_self
-    }
+    author2token = {authors[-1][0]: speaker_partner, authors[-2][0]: speaker_self}
     author_tokens = [author2token.get(author[0], speaker_other) for author in authors]
 
     # Add author tokens
@@ -169,8 +176,8 @@ def get_data_loaders(args, tokenizer):
         for dialog in dataset:
             persona = dialog["personality"].copy()
             for utterance in dialog["utterances"]:
-                history = utterance["history"][-(2 * args.max_history + 1):]
-                authors = utterance["historic_users"][-(2 * max_history + 1) :]
+                history = utterance["history"][-(2 * args.max_history + 1) :]
+                authors = utterance["authors"][-(2 * args.max_history + 1) :]
                 for j, candidate in enumerate(
                     utterance["candidates"][-num_candidates:]
                 ):
@@ -415,7 +422,7 @@ def train():
 
     # Evaluation function and evaluator (evaluator output is the input of the metrics)
     def inference(engine, batch):
-        model.eval()        
+        model.eval()
         with torch.no_grad():
             batch = tuple(input_tensor.to(args.device) for input_tensor in batch)
             input_ids, mc_token_ids, lm_labels, mc_labels, token_type_ids = batch
@@ -431,10 +438,14 @@ def train():
             )
             lm_labels_flat_shifted = lm_labels[..., 1:].contiguous().view(-1)
             if random.random() < 0.05:
-                input_text = tokenizer.decode(input_ids[0, -1,:].tolist()).strip('<pad>')[:400]
-                output_text = tokenizer.decode(lm_logits[0, -1, :].argmax(-1).tolist()).strip()[:400]
-                logger.info('inputs : %s', input_text)
-                logger.info('outputs: %s', output_text)
+                input_text = tokenizer.decode(input_ids[0, -1, :].tolist()).strip(
+                    "<pad>"
+                )[:400]
+                output_text = tokenizer.decode(
+                    lm_logits[0, -1, :].argmax(-1).tolist()
+                ).strip()[:400]
+                logger.info("inputs : %s", input_text)
+                logger.info("outputs: %s", output_text)
             return (
                 (lm_logits_flat_shifted, mc_logits),
                 (lm_labels_flat_shifted, mc_labels),
@@ -443,12 +454,8 @@ def train():
     evaluator = Engine(inference)
 
     # Attach evaluation to trainer: we evaluate when we start the training and at the end of each epoch
-    trainer.add_event_handler(
-        Events.EPOCH_COMPLETED, lambda _: clear_mem()
-    )
-    trainer.add_event_handler(
-        Events.EPOCH_STARTED, lambda _: clear_mem()
-    )
+    trainer.add_event_handler(Events.EPOCH_COMPLETED, lambda _: clear_mem())
+    trainer.add_event_handler(Events.EPOCH_STARTED, lambda _: clear_mem())
     trainer.add_event_handler(
         Events.EPOCH_COMPLETED, lambda _: evaluator.run(val_loader)
     )
