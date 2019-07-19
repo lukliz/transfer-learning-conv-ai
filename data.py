@@ -248,9 +248,12 @@ def load_utterances(personality, files, tokenizer, max_seq_len, num_candidates=1
                     lambda x: not x.get("stickied", False),
 
                     # Short comments are low information and too easy
-                    lambda x: len(x.get("body", "")) > 20,
+                    lambda x: len(x.get("body", "")) > 30,
                     lambda x: len(x.get("body", ""))
-                    < 380,  # Ones that are too long don't do well sometimes, tweet length
+                    < 240,  # Ones that are too long don't do well sometimes, lets keep it tweet length
+
+                    # A bit of +ve karma plz
+                    lambda x: x.get("score", 2)>2,
 
                     # Also filter out op? In roast me they do not do roasting
                     lambda r: r['author']!=history_things[0]['author'],
