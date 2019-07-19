@@ -253,9 +253,9 @@ def load_utterances(personality, files, tokenizer, max_seq_len, num_candidates=1
                     # Short comments are low information and too easy
                     lambda x: len(x.get("body", "")) > 20,
                     lambda x: len(x.get("body", ""))
-                    < 280,  # Ones that are too long don't do well sometimes, tweet length
+                    < 380,  # Ones that are too long don't do well sometimes, tweet length
 
-                    # the output tends to be repetitive and loop, lets avoid that a bit by filtering out repetative replies
+                    # the output tends to be repetitive and loop, lets avoid that a bit by filtering out repetitive replies
                     lambda x: max([fuzz.ratio(x.get("body", ""), h)/100 for h in history]) < 0.75
                 ]
                 # TODO try filtering out replies that overlap too much with history. This avoid repitative qouting and answers
