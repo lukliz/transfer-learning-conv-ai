@@ -226,9 +226,6 @@ def load_utterances(personality, files, tokenizer, max_seq_len, num_candidates=1
 
                 replies = [thing_by_id[node.name] for node in current_node.children]
 
-                # Also filter out op? In roast me they do not do roasting
-                replies = filter(lambda r: r['author']!=history_things[0]['author'], replies)
-
                 # We now want to find distractors. None of these ID's will do
                 correct_ids = (
                     [node.name for node in current_node.path]
@@ -255,10 +252,12 @@ def load_utterances(personality, files, tokenizer, max_seq_len, num_candidates=1
                     lambda x: len(x.get("body", ""))
                     < 380,  # Ones that are too long don't do well sometimes, tweet length
 
-                    # the output tends to be repetitive and loop, lets avoid that a bit by filtering out repetitive replies
+                    # Also filter out op? In roast me they do not do roasting
+                    lambda r: r['author']!=history_things[0]['author'],
+
+                    # the output tends to be repetitive and loop, lets avoid that a bit by filtering out v. repetitive replies
                     lambda x: max([fuzz.ratio(x.get("body", ""), h)/100 for h in history]) < 0.75
                 ]
-                # TODO try filtering out replies that overlap too much with history. This avoid repitative qouting and answers
                 for f in filters:
                     replies = filter(f, replies)
                     distractors = filter(f, distractors)
