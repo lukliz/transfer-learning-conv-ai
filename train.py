@@ -440,7 +440,7 @@ def train():
                 lm_logits[..., :-1, :].contiguous().view(-1, lm_logits.size(-1))
             )
             lm_labels_flat_shifted = lm_labels[..., 1:].contiguous().view(-1)
-            if random.random() < 0.05:
+            if random.random() < 0.02:
                 input_text = tokenizer.decode(input_ids[0, -1, :].cpu().tolist()).rstrip(
                     "<pad>"
                 )
@@ -464,7 +464,7 @@ def train():
     trainer.add_event_handler(Events.STARTED, lambda _: clear_mem())
     trainer.add_event_handler(
             Events.EPOCH_STARTED,
-            lambda engine: logger.info(f"LR: {optimizer.get_lr()}"),
+            lambda engine: logger.info(f"LR: {optimizer.get_lr()[0]}"),
         )
     trainer.add_event_handler(
         Events.EPOCH_COMPLETED, lambda _: evaluator.run(val_loader)
