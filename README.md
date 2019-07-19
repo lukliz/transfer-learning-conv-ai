@@ -6,9 +6,9 @@ This repo uses reddit data from pushshift.io to create a chat bot. It's like the
 - install the requirements in `requirements.txt` you will need `pytorch-pretrained-bert>0.6.2` which may be the latest git release
 - (optional) get data with `fetch_pushshift_data.py` (run overnight)
 - with a nvidia 2080 ti you can run:
-  - gpt2-small with `python -m ipdb train.py --model_checkpoint gpt2 --fp16 O2 --gradient_accumulation_steps 32 --train_batch_size 1 --valid_batch_size 1 --n_epochs 3`
+  - gpt2-small with `python -m ipdb train.py --model_checkpoint gpt2 --fp16 O1 --gradient_accumulation_steps 32 --train_batch_size 1 --valid_batch_size 1 --n_epochs 3`
     - If you leave the data path empty, it will download data from s3
-  - gpt2-medium with `python -m ipdb train.py --model_checkpoint gpt2-medium --max_seq_len 750 --dataset_path ./data/reddit_threads --fp16 O2 --gradient_accumulation_steps 32 --train_batch_size 1 --valid_batch_size 1 --n_epochs 3`
+  - gpt2-medium with `python -m ipdb train.py --model_checkpoint gpt2-medium --max_seq_len 500 --dataset_path ./data/reddit_threads --fp16 O1 --gradient_accumulation_steps 32 --train_batch_size 1 --valid_batch_size 1 --n_epochs 3`
 - interact with 
   - `python interact.py --device cpu --dataset_path ./data/reddit_threads` which will download a pretrained model
   - `python interact.py --device cpu --dataset_path ./data/reddit_threads --model_checkpoint runs/<run_name>` for you own run

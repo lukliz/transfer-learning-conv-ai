@@ -387,7 +387,7 @@ def train():
     model.set_num_special_tokens(len(SPECIAL_TOKENS))
     model.to(args.device)
     t_total = len(train_loader) // args.gradient_accumulation_steps * args.n_epochs
-    optimizer = OpenAIAdam(model.parameters(), lr=args.lr, t_total=t_total, warmup=0.1)
+    optimizer = OpenAIAdam(model.parameters(), lr=args.lr)
     # Prepare model for FP16 and distributed training if needed (order is important, distributed should be the last)
     if args.fp16:
         from apex import amp  # Apex is only required if we use fp16 training
@@ -423,6 +423,7 @@ def train():
     # Evaluation function and evaluator (evaluator output is the input of the metrics)
     def inference(engine, batch):
         model.eval()
+        clear_mem()
         with torch.no_grad():
             batch = tuple(input_tensor.to(args.device) for input_tensor in batch)
             input_ids, mc_token_ids, lm_labels, mc_labels, token_type_ids = batch
@@ -456,6 +457,8 @@ def train():
     # Attach evaluation to trainer: we evaluate when we start the training and at the end of each epoch
     trainer.add_event_handler(Events.EPOCH_COMPLETED, lambda _: clear_mem())
     trainer.add_event_handler(Events.EPOCH_STARTED, lambda _: clear_mem())
+    trainer.add_event_handler(Events.COMPLETED, lambda _: clear_mem())
+    trainer.add_event_handler(Events.STARTED, lambda _: clear_mem())
     trainer.add_event_handler(
         Events.EPOCH_COMPLETED, lambda _: evaluator.run(val_loader)
     )

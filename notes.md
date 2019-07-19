@@ -639,3 +639,25 @@ Epoch [3/3]: [71520/71520] 100%|████████████████
 It looks like interact has a couple of problems:
 - P search sometimes goes forever, I'm guess when it's not confident
 - It loops
+
+
+
+For some reason a simpler approach works https://github.com/wassname/simple_gpt2_chatbot
+- this could be due to the TPU training
+- or the lack of a dual head. So lets try this repo with no distractors. and just one repo
+
+
+```sh
+python -m ipdb train.py \
+--model_checkpoint gpt2-medium \
+--fp16 O1 \
+--gradient_accumulation_steps 32 \
+--max_seq_len 512 \
+--train_batch_size 1 \
+--valid_batch_size 1 \
+--n_epochs 3 \
+--num_candidates 1  \
+--mc_coef 0 \
+--dataset_path data/reddit_threads/ \
+-s aww
+```
