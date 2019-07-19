@@ -38,9 +38,9 @@ from pytorch_pretrained_bert import (
 SPECIAL_TOKENS = [
     "<bos>",
     "<eos>",
-    "<speaker_partner>",
-    "<speaker_other>",
-    "<speaker_self>",
+    "<spartner>",
+    "<sother>",
+    "<sself>",
     "<pad>",
 ]
 MODEL_INPUTS = ["input_ids", "mc_token_ids", "lm_labels", "mc_labels", "token_type_ids"]
@@ -171,7 +171,7 @@ def get_data_loaders(args, tokenizer):
     }
     for dataset_name, dataset in personachat.items():
         num_candidates = len(dataset[0]["utterances"][0]["candidates"])
-        if args.num_candidates > 0 and dataset_name == "train":
+        if args.num_candidates > 0: # and dataset_name == "train":
             num_candidates = min(args.num_candidates, num_candidates)
         for dialog in dataset:
             persona = dialog["personality"].copy()
@@ -197,6 +197,9 @@ def get_data_loaders(args, tokenizer):
                         datasets[dataset_name][input_name].append(input_array)
                 datasets[dataset_name]["mc_labels"].append(num_candidates - 1)
                 datasets[dataset_name]["n_candidates"] = num_candidates
+
+    # Preview inputs
+    [logger.info(f"{key} {datasets[dataset_name][key]}") for key in datasets[dataset_name].keys()]
 
     logger.info("Pad inputs and convert to Tensor")
     tensor_datasets = {"train": [], "valid": [], "test": []}
@@ -423,7 +426,6 @@ def train():
     # Evaluation function and evaluator (evaluator output is the input of the metrics)
     def inference(engine, batch):
         model.eval()
-        clear_mem()
         with torch.no_grad():
             batch = tuple(input_tensor.to(args.device) for input_tensor in batch)
             input_ids, mc_token_ids, lm_labels, mc_labels, token_type_ids = batch
@@ -439,12 +441,12 @@ def train():
             )
             lm_labels_flat_shifted = lm_labels[..., 1:].contiguous().view(-1)
             if random.random() < 0.05:
-                input_text = tokenizer.decode(input_ids[0, -1, :].cpu().tolist()).strip(
+                input_text = tokenizer.decode(input_ids[0, -1, :].cpu().tolist()).rstrip(
                     "<pad>"
-                )[:400]
+                )
                 output_text = tokenizer.decode(
-                    lm_logits[0, -1, :].argmax(-1).cpu().tolist(), skip_special_tokens=True
-                ).strip()[:400]
+                    lm_logits[0, -1, :].argmax(-1).cpu().tolist(), skip_special_tokens=False
+                ).strip()[:200]
                 logger.info("inputs : %s", input_text)
                 logger.info("outputs: %s", output_text)
                 clear_mem()
@@ -460,6 +462,10 @@ def train():
     trainer.add_event_handler(Events.EPOCH_STARTED, lambda _: clear_mem())
     trainer.add_event_handler(Events.COMPLETED, lambda _: clear_mem())
     trainer.add_event_handler(Events.STARTED, lambda _: clear_mem())
+    trainer.add_event_handler(
+            Events.EPOCH_STARTED,
+            lambda engine: logger.info(f"LR: {optimizer.get_lr()}"),
+        )
     trainer.add_event_handler(
         Events.EPOCH_COMPLETED, lambda _: evaluator.run(val_loader)
     )
@@ -479,9 +485,10 @@ def train():
             lambda engine: valid_sampler.set_epoch(engine.state.epoch),
         )
 
-    # Linearly decrease the learning rate from lr to zero
+    # Learning rate warms up then linearly decreases
+    tot_iters = args.n_epochs * len(train_loader)
     scheduler = PiecewiseLinear(
-        optimizer, "lr", [(0, args.lr), (args.n_epochs * len(train_loader), 0.0)]
+        optimizer, "lr", [(0, 0), (tot_iters * 0.3, args.lr), (tot_iters, 0.0)]
     )
     trainer.add_event_handler(Events.ITERATION_STARTED, scheduler)
 
