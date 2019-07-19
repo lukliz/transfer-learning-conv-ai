@@ -226,6 +226,9 @@ def load_utterances(personality, files, tokenizer, max_seq_len, num_candidates=1
 
                 replies = [thing_by_id[node.name] for node in current_node.children]
 
+                # Also filter out op? In roast me they do not do roasting
+                replies = filter(replies, lambda r: r['author']!=history[0]['author'])
+
                 # We now want to find distractors. None of these ID's will do
                 correct_ids = (
                     [node.name for node in current_node.path]
