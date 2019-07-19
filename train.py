@@ -439,14 +439,15 @@ def train():
             )
             lm_labels_flat_shifted = lm_labels[..., 1:].contiguous().view(-1)
             if random.random() < 0.05:
-                input_text = tokenizer.decode(input_ids[0, -1, :].tolist()).strip(
+                input_text = tokenizer.decode(input_ids[0, -1, :].cpu().tolist()).strip(
                     "<pad>"
                 )[:400]
                 output_text = tokenizer.decode(
-                    lm_logits[0, -1, :].argmax(-1).tolist()
+                    lm_logits[0, -1, :].argmax(-1).cpu().tolist(), skip_special_tokens=True
                 ).strip()[:400]
                 logger.info("inputs : %s", input_text)
                 logger.info("outputs: %s", output_text)
+                clear_mem()
             return (
                 (lm_logits_flat_shifted, mc_logits),
                 (lm_labels_flat_shifted, mc_labels),
