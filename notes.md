@@ -837,6 +837,19 @@ git hash b6211b39a0024cabecfa0228c3e74fdecf248f94
 - [x] copy model to my pc
 - [x] icon 
 - [ ] put on twitter & thinkcds irc?
-  - [ ] 
+  - [ ] start with someone elses IRC jimmies maybe
 - [ ] replace r/? with ?
 - [ ] make it clear who is roaster and roastee (make it random?)
+
+
+Now trying with top level comments
+
+
+
+IRC BOT
+- use simple python api
+- wait 10 seconds
+- batch messages to its channel
+- predict
+- send response
+- repeat
