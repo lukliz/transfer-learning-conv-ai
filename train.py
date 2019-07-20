@@ -203,7 +203,11 @@ def get_data_loaders(args, tokenizer):
                 datasets[dataset_name]["n_candidates"] = num_candidates
 
     # Preview inputs
-    [logger.info(f"{key} {datasets[dataset_name][key]}") for key in datasets[dataset_name].keys()]
+    for key in datasets[dataset_name].keys():
+        value = datasets[dataset_name][key]
+        if isinstance(value, list):
+            value = value[-2:]
+        logger.info(f"{key} {datasets[dataset_name][key]}")
 
     logger.info("Pad inputs and convert to Tensor")
     tensor_datasets = {"train": [], "valid": [], "test": []}
