@@ -313,7 +313,7 @@ def threads_to_utterances(splits, tokenizer, max_seq_len):
                 num_candidates=10,
             )
             if utterances_dict['utterances']:
-            dataset2[split].append(utterances_dict)
+                dataset2[split].append(utterances_dict)
 
             logger.info(
                 f"Utterances for {split} & /r/{personality}: {len(utterances_dict['utterances'])}"
