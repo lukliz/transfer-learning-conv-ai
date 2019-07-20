@@ -4,6 +4,8 @@ import logging
 import math
 import gc
 import os
+import itertools
+import functools
 import random
 from argparse import ArgumentParser
 from collections import defaultdict
@@ -20,7 +22,7 @@ from ignite.contrib.handlers.tensorboard_logger import (
 )
 from ignite.engine import Engine, Events
 from ignite.handlers import ModelCheckpoint
-from ignite.metrics import Accuracy, Loss, MetricsLambda, RunningAverage
+from ignite.metrics import Accuracy, Loss, MetricsLambda, RunningAverage, EpochMetric
 from torch.nn.parallel import DistributedDataParallel
 from torch.utils.data import DataLoader, TensorDataset
 
@@ -209,7 +211,7 @@ def get_data_loaders(args, tokenizer):
         value = datasets[dataset_name][key]
         if isinstance(value, list):
             value = value[-2:]
-        logger.info(f"{key} {datasets[dataset_name][key]}")
+        logger.debug(f"{key} {value}")
 
     logger.info("Pad inputs and convert to Tensor")
     tensor_datasets = {"train": [], "valid": [], "test": []}
@@ -434,7 +436,7 @@ def train():
     trainer = Engine(update)
 
     # Evaluation function and evaluator (evaluator output is the input of the metrics)
-    def inference(engine, batch):
+    def inference(engine, batch, log_output=False):
         model.eval()
         with torch.no_grad():
             batch = tuple(input_tensor.to(args.device) for input_tensor in batch)
@@ -450,34 +452,39 @@ def train():
                 lm_logits[..., :-1, :].contiguous().view(-1, lm_logits.size(-1))
             )
             lm_labels_flat_shifted = lm_labels[..., 1:].contiguous().view(-1)
-            if random.random() < 0.02:
+
+            # Every now and again sample I guess I should make a custom engine for this
+            if log_output:
                 input_text = tokenizer.decode(input_ids[0, -1, :].cpu().tolist()).rstrip(
                     "<pad>"
                 )
                 output_text = tokenizer.decode(
-                    lm_logits[0, -1, :].argmax(-1).cpu().tolist(), skip_special_tokens=False
+                    lm_logits[0, -1, :].argmax(-1).cpu().tolist()
                 ).strip()[:200]
                 logger.info("inputs : %s", input_text)
                 logger.info("outputs: %s", output_text)
-                clear_mem()
-            return (
-                (lm_logits_flat_shifted, mc_logits),
-                (lm_labels_flat_shifted, mc_labels),
-            )
+            return dict(
+                lm_logits_flat_shifted=lm_logits_flat_shifted, 
+                mc_logits=mc_logits,
+                lm_labels_flat_shifted=lm_labels_flat_shifted, 
+                mc_labels=mc_labels,
+                lr=torch.Tensor([optimizer.get_lr()[0]])
+                )
 
     evaluator = Engine(inference)
+    exampler = Engine(functools.partial(inference, log_output=True))
+
+    trainer.add_event_handler(Events.EPOCH_STARTED, lambda _: clear_mem())
+    evaluator.add_event_handler(Events.EPOCH_STARTED, lambda _: clear_mem())
 
     # Attach evaluation to trainer: we evaluate when we start the training and at the end of each epoch
-    trainer.add_event_handler(Events.EPOCH_COMPLETED, lambda _: clear_mem())
-    trainer.add_event_handler(Events.EPOCH_STARTED, lambda _: clear_mem())
-    trainer.add_event_handler(Events.COMPLETED, lambda _: clear_mem())
-    trainer.add_event_handler(Events.STARTED, lambda _: clear_mem())
-    trainer.add_event_handler(
-            Events.EPOCH_STARTED,
-            lambda engine: logger.info(f"LR: {optimizer.get_lr()[0]}"),
-        )
     trainer.add_event_handler(
         Events.EPOCH_COMPLETED, lambda _: evaluator.run(val_loader)
+    )
+    # After eval, run a short engine that will log some examplts
+    evaluator.add_event_handler(
+        # Events.EPOCH_COMPLETED, lambda _: exampler.run([next(iter(val_loader))])
+        Events.EPOCH_COMPLETED, lambda _: exampler.run(itertools.islice(val_loader, 2))
     )
     if args.n_epochs < 1:
         trainer.add_event_handler(Events.COMPLETED, lambda _: evaluator.run(val_loader))
@@ -507,14 +514,23 @@ def train():
     metrics = {
         "nll": Loss(
             torch.nn.CrossEntropyLoss(ignore_index=-1),
-            output_transform=lambda x: (x[0][0], x[1][0]),
+            output_transform=lambda x: (x['lm_logits_flat_shifted'], x['lm_labels_flat_shifted']),
+        ),
+        # Display the lr for each epoch, using the metrics api
+        "lr": EpochMetric(
+            output_transform=lambda x: (x['lr'], x['lr']),
+            compute_fn=lambda x, y: x[0].mean()
         )
     }
+    # Meta metrics
     metrics.update(
         {"average_nll": MetricsLambda(average_distributed_scalar, metrics["nll"], args)}
     )
+    metrics["average_ppl"] = MetricsLambda(math.exp, metrics["average_nll"])
+
+    # Only add accuracy if are using distractors
     if args.num_candidates > 1:
-        metrics["accuracy"] = Accuracy(output_transform=lambda x: (x[0][1], x[1][1]))
+        metrics["accuracy"] = Accuracy(output_transform=lambda x: (x['mc_logits'], x['mc_labels']))
         metrics.update(
             {
                 "average_accuracy": MetricsLambda(
@@ -522,8 +538,6 @@ def train():
                 )
             }
         )
-
-    metrics["average_ppl"] = MetricsLambda(math.exp, metrics["average_nll"])
     for name, metric in metrics.items():
         metric.attach(evaluator, name)
 
