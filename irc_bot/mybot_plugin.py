@@ -3,13 +3,19 @@ from irc3.plugins.command import command
 import irc3
 import zmq
 import random
+import logging
 import sys
 import json
 import time
 import coloredlogs
+import collections
+import time
 
-coloredlogs.install()
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__file__)
+coloredlogs.install(level=logging.DEBUG)
 
+logging.getLogger('zmqtest').setLevel(logging.DEBUG)
 
 @irc3.plugin
 class Plugin:
@@ -24,11 +30,16 @@ class Plugin:
         self.bot = bot
 
         # Zeromq to pytorch server
-        port = "5556"
-        print(f"Joining Zeromq server in {port}")
+        port = "5586"
+        logger.info(f"Joining Zeromq server in {port}")
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.PAIR)
         self.socket.connect("tcp://localhost:%s" % port)
+        time.sleep(1)
+        msg = self.socket.recv().decode()
+        logger.info('Connected to server, received initial message: %s', msg)
+
+        self.history = collections.defaultdict(list)
 
     @irc3.event(irc3.rfc.JOIN)
     def say_hi(self, mask, channel, **kw):
@@ -38,66 +49,37 @@ class Plugin:
             self.bot.privmsg(channel, "Hi %s! Roast me." % mask.nick)
         else:
             # When we join the channel, public message
-            self.bot.privmsg(channel, "Hi! Roast me.")
+            self.bot.privmsg(channel, "Hi! I'm a robot using GPT2-medium and trained on /r/RoastMe. RoastMe and I will roast you back.")
 
-    @command(permission="view")
-    def echo(self, mask, target, args):
-        """Echo
+    @irc3.event(irc3.rfc.PRIVMSG)
+    def roast(self, mask=None, data=None, **kwargs):
+        # TODO have a history per user
+        channel = kwargs['target']
+        name = mask.split('!')[0]
+        if channel != self.bot.nick:
+            self.history[name].append(data)
+            logger.debug("roast(%s)", dict(mask=mask, data=data, **kwargs))
+            payload = dict(personality='RoastMe', history=self.history[name])
+            logger.debug("payload %s", payload)
+            self.socket.send_json(payload)
+            reply = self.socket.recv_json()["data"]
+            msg = f'@{name}: {reply}'
+            self.bot.privmsg(channel, msg)
+            logger.info("out msg: channel=%s, msg=%s", channel, msg)
+            return msg
 
-            %%echo <message>...
-        """
-        yield " ".join(args["<message>"])
+    # @irc3.event(irc3.rfc.PRIVMSG)
+    # async def roast_async(self, mask=None, data=None, **kw):
+    #     """Say hi when someone join a channel"""
+    #     print(kw, dict(mask=mask, data=data))
+    #     history = [data]
+    #     payload = dict(personality='RoastMe', history=history)
+    #     print(payload)
+    #     self.socket.send_json(payload)
+    #     msg = await self.socket.recv_json()
+    #     reply = self.socket.recv_json()["data"]
+    #     return msg
 
-    @command(permission="view")
-    async def roastme(self, mask, target, args):
-        """roastme
-
-            %%roastme <message>...
-        """
-        # {'mask': 'wassname!~wassname@61-245-129-25.3df581.per.nbn.aussiebb.net', 'target': '#botwars', 'args': {'<message>': ['test'], 'roastme': True}}
-
-        print(dict(mask=mask, target=target, args=args))
-        history = [' '.join(args["<message>"])]
-        payload = dict(personality='RoastMe', history=history)
-        print(payload)
-        self.socket.send_json(payload)
-        msg = await self.socket.recv()
-        return msg
-
-
-    # @command
-    # async def get(self, mask, target, args):
-    #     """Async get items from the queue
-    #         %%get
-    #     """
-    #     messages = []
-    #     message = await self.queue.get()
-    #     messages.append(message)
-    #     while not self.queue.empty():
-    #         message = await self.queue.get()
-    #         messages.append(message)
-    #     return messages
-
-    # @irc3.event(irc3.rfc.MY_PRIVMSG)
-    # def on_message(self, mask=None, event=None, target=None, data=None, **kw):
-    #     with codecs.open(self.db, 'ab+', encoding=self.bot.encoding) as fd:
-    #         fd.write(data + '\n')
-
-    #     pos = random.randint(0, os.stat(self.db)[stat.ST_SIZE])
-    #     with codecs.open(self.db, encoding=self.bot.encoding) as fd:
-    #         fd.seek(pos)
-    #         fd.readline()
-    #         try:
-    #             message = fd.readline().strip()
-    #         except Exception:  # pragma: no cover
-    #             pass
-
-    #     message = message or 'Yo!'
-    #     if target.is_channel:
-    #         message = '{0}: {1}'.format(mask.nick, message)
-    #     else:
-    #         target = mask.nick
-    #     self.call_with_human_delay(self.bot.privmsg, target, message)
 
 def main():
     # instanciate a bot
@@ -112,24 +94,11 @@ def main():
         ],
     )
     import irc3.testing
-    # bot = irc3.testing.IrcBot.from_config(config)
-    # bot.test(':gawel!user@host PRIVMSG !echo echo test', show=True)
-    # bot.test(':gawel!user@host PRIVMSG !roastme test', show=True)
-    # bot.test(':gawel!user@host JOIN #chan')
 
-    bot = irc3.testing.IrcBot()
-    bot.include(__name__)
-    bot.test(':wassname!user@host PRIVMSG !echo echo test', show=True)
-    bot.test(':wassname!user@host PRIVMSG !roastme test', show=True)
-    bot.test(':wassname!user@host JOIN #chan')
-    bot.quit()
-    bot.protocol.close()
-    print(1)
-    print(dir(bot.protocol))
-
-    # bot = irc3.IrcBot.from_config(config)
-    # bot.run(forever=True)
+    bot = irc3.IrcBot.from_config(config)
+    bot.run(forever=True)
 
 
 if __name__ == '__main__':
     main()
+

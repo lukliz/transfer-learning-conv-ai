@@ -2,12 +2,16 @@
 # All rights reserved.
 # This source code is licensed under the BSD-style license found in the
 # LICENSE file in the root directory of this source tree.
+"""
+python interact_server.py  --max_history 4 --top_p 0.8  --fp16 O2 --model_checkpoint runs/Jul19_14-38-58_ip-172-31-39-133_goood
+"""
 import logging
 import random
 from argparse import ArgumentParser
 from itertools import chain
 from pathlib import Path
 from pprint import pformat
+import time
 
 import zmq
 import coloredlogs
@@ -19,6 +23,8 @@ from data import MJC_FINETUNED_MODEL, download_targz_to_folder
 from pytorch_pretrained_bert import (GPT2LMHeadModel, GPT2Tokenizer,
                                      OpenAIGPTLMHeadModel, OpenAIGPTTokenizer)
 from train import SPECIAL_TOKENS, build_input_from_segments
+
+logging.getLogger('zmqtest').setLevel(logging.DEBUG)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__file__)
@@ -199,7 +205,7 @@ def run():
 
     if args.fp16:
         from apex import amp  # Apex is only required if we use fp16 training
-        model, optimizer = amp.initialize(model, optimizer, opt_level=args.fp16)
+        model = amp.initialize(model, opt_level=args.fp16)
 
     logger.info("Sample a personality")
     model_training_args = Path(args.model_checkpoint).joinpath(
@@ -216,25 +222,28 @@ def run():
             f"Could not load personalities from file {model_training_args}"
         )
     personality = random.choice(personalities)
-    print("personalities", [tokenizer.decode(chain(*p)) for p in personalities])
-    logger.info("Selected personality: /r/%s. use 'RESET' to change", tokenizer.decode(chain(*personality)))
+    print("training personalities", [tokenizer.decode(chain(*p)) for p in personalities])
 
 
-    port = "5556"
+    port = "5586"
     context = zmq.Context()
     socket = context.socket(zmq.PAIR)
-    socket.bind("tcp://*:%s" % port)
-    logger.info(f"Starting ZMQ server on port {port}")
+    socket.bind("tcp://127.0.0.1:%s" % port)
+    socket.setsockopt(zmq.LINGER, 0) # timeout
+    logger.info(f"bind ZMQ server on port {port}")
+    time.sleep(10)
+    socket.send_string("Server ready")
 
     while True:
+        logger.info('ZMQ waiting to receive')
         msg = socket.recv_json()
-        print('msg', msg)
+        logger.info('msg %s', msg)
         with torch.no_grad():
             personality = [tokenizer.encode(msg['personality'])]
             history = [tokenizer.encode(h) for h in msg['history']]
             out_ids = sample_sequence(personality, history, tokenizer, model, args)
             out_text = tokenizer.decode(out_ids, skip_special_tokens=True)
-        socket.send("Server message to client3")
+        socket.send_json(dict(data=out_text))
         time.sleep(1)
 
 
