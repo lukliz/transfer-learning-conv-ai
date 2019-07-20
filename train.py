@@ -166,6 +166,8 @@ def get_data_loaders(args, tokenizer):
         subreddits=args.subreddit,
         max_seq_len=args.max_seq_len,
     )
+    if not personachat:
+        raise ValueError("No dataset loaded")
 
     logger.info("Build inputs and labels")
     datasets = {
