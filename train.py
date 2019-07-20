@@ -123,7 +123,11 @@ def build_input_from_segments(
     reply_c = sequence[-1]
 
     # Convert authors to tokens
-    author2token = {authors[-1][0]: speaker_partner, authors[-2][0]: speaker_self}
+    author2token = {}
+    if len(authors)>0:
+        author2token[authors[-1][0]]=speaker_partner
+    if len(authors)>1:
+        author2token[authors[-2][0]]=speaker_self
     author_tokens = [author2token.get(author[0], speaker_other) for author in authors]
 
     # Add author tokens
