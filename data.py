@@ -210,9 +210,7 @@ def load_utterances(personality, files, tokenizer, max_seq_len, num_candidates=1
         # Make a max number of candidates that will fit on your GPU
         submission_id = get_id_for_comments(thread["submission"])
         for current_node in nodes_by_id.values():
-            if (
-                current_node.parent
-                and len(current_node.path) > 1  # It must have some parent comments
+            if (len(current_node.path) > 0  # It must have some parent comments
                 and len(current_node.children) >= 1  # And child comments
             ):
                 history_things = [thing_by_id[node.name] for node in current_node.path]
