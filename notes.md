@@ -661,3 +661,182 @@ python -m ipdb train.py \
 --dataset_path data/reddit_threads/ \
 -s aww
 ```
+
+
+working on 16GB gpu. It's often best to test max batch size using a subreddit with long posts like starslatecodex
+`python -m ipdb train.py --model_checkpoint gpt2-medium --fp16 O1 --gradient_accumulation_steps 1 --max_seq_len 300 --train_batch_size 4 --valid_batch_size 2 --n_epochs 8 --num_candidates 1 --mc_coef 0 --dataset_path data/reddit_threads/ -s roastmetest`
+
+
+Trying on experiment on ec2 where I do gpt2-medium, only short seq len. All the new things like speaker tokens and no classification, jsut roast me. Also I am logging LR so I can see if it's too high
+`nohup python train.py --model_checkpoint gpt2-medium --fp16 O1 --gradient_accumulation_steps 1 --max_seq_len 300 --train_batch_size 5 --valid_batch_size 4 --n_epochs 10 --num_candidates 1 --mc_coef 0 --dataset_path data/reddit_threads/ -s RoastMe &`
+
+```
+2019-07-19 10:20:21 ip-172-31-39-133 train.py[31628] INFO outputs: <bos><spartner><bos><spartner>I think not fucking school drop and a. I<sself> mental.<eos> off. shred obs<eos><eos><eos>I you a to get at or are you teeth just to handle? the?usey's dick?<eos>I, I<eos
+2019-07-19 10:20:22 ip-172-31-39-133 train.py[31628] INFO inputs : <bos>RoastMe<spartner>21 y/o from Uruguay. Roast me and my grandpa glasses
+<sself>You look like a 53 year-old pedo trapped inside a 21 year-old’s body. It must be hell for you being too old to go fuck yourself. <spartner>I cry myself to sleep every night because of that<sself>Only because the sound of a girl crying lulls you to sleep. <eos
+2019-07-19 10:20:22 ip-172-31-39-133 train.py[31628] INFO outputs: <bos><spartner><bos><spartner>I years/o<eos> the<eos><eos>ast me, I mompa<eos><eos><eos>I� like you cross year oldold mano. in a woman year-old girl�s vagina.<eos>'s be a. him. a young to be to a.<eos
+
+
+
+Epoch [3/10]: [4110/4110] 100%|██████████, loss=2.72e+00 [23:35<00:00]2019-07-19 11:08:56 ip-172-31-39-133 ignite.engine.engine.Engine[31628] INFO Epoch[3] Complete. Time taken: 00:23:36
+2019-07-19 11:08:56 ip-172-31-39-133 ignite.engine.engine.Engine[31628] INFO Engine run starting with max_epochs=1.
+2019-07-19 11:08:58 ip-172-31-39-133 train.py[31628] INFO inputs : <bos>RoastMe<sother>Bored in class, roast us
+<sother>I feel like both of you have said "20 bucks is 20 bucks" at some point in your lives<sself>i mean 20 bucks is 20 bucks tho, no homo<spartner>Our preferences are incompatible, I only like the vaginal.<sself>I like vagina too but i also like 20 dollars<eos
+2019-07-19 11:08:58 ip-172-31-39-133 train.py[31628] INFO outputs: <bos><spartner><eos><eos>Ioom of the<eos> but me<eos><eos>I� like this of you are the thisI years" a bucks"<eos> some point. your lives.I think, bucks is 20 cents,<eos> that oneo I society are clearly
+
+
+Epoch [4/10]: [4110/4110] 100%|██████████, loss=2.18e+00 [23:41<00:00]2019-07-19 11:33:22 ip-172-31-39-133 ignite.engine.engine.Engine[31628] INFO Epoch[4] Complete. Time taken: 00:23:42
+2019-07-19 11:33:22 ip-172-31-39-133 ignite.engine.engine.Engine[31628] INFO Engine run starting with max_epochs=1.
+2019-07-19 11:33:23 ip-172-31-39-133 train.py[31628] INFO inputs : <bos>RoastMe<sself>Stuck at mom’s place on a friday night, my vape is bigger than my dick and I always cry at Pride. Remind me how it felt to get bullied in middle school
+<spartner>You would have been Hitler's exception.<sself>Lol I had to go back and check out the eye color. 
+<eos
+2019-07-19 11:33:23 ip-172-31-39-133 train.py[31628] INFO outputs: <pad>ast<eos><eos>Iolen in themy�s finger<eos> the trainiday night<eos> she mom pen gone than your vape. I need have<eos> work.<eos>inds of I feels to be spit in school school.<eos>I look have been cu
+
+
+Epoch [7/10]: [4110/4110] 100%|██████████, loss=7.95e-01 [23:34<00:00]2019-07-19 12:46:18 ip-172-31-39-133 ignite.engine.engine.Engine[31628] INFO Epoch[7] Complete. Time taken: 00:23:35
+2019-07-19 12:46:18 ip-172-31-39-133 ignite.engine.engine.Engine[31628] INFO Engine run starting with max_epochs=1.
+2019-07-19 12:46:19 ip-172-31-39-133 train.py[31628] INFO inputs : <bos>RoastMe<sself>My mom
+<spartner>Your mom looks too sweet to roast.<sself>came here to see who was going to make this comment. not disappointed to find you on top (and neither was the mom, hey-o!)<eos
+2019-07-19 12:46:19 ip-172-31-39-133 train.py[31628] INFO outputs: <pad>ast<eos><eos>I favorite used
+My mom's like young for be you Sheame here to say a was hot to comment the comment first i ro  see out. here.c I is my comment when she,kay).<eos>top!!!!!      
+
+
+
+Epoch [8/10]: [4110/4110] 100%|██████████, loss=5.15e-01 [23:36<00:00]2019-07-19 13:10:39 ip-172-31-39-133 ignite.engine.engine.Engine[31628] INFO Epoch[8] Complete. Time taken: 00:23:37
+2019-07-19 13:10:39 ip-172-31-39-133 ignite.engine.engine.Engine[31628] INFO Engine run starting with max_epochs=1.
+2019-07-19 13:10:40 ip-172-31-39-133 train.py[31628] INFO inputs : <bos>RoastMe<sother>Destroy me reddit
+<sself>Like you've destroyed those poor girls locked up in your basement? No thanks, mate.<spartner>It looks like you been entered into by more men then the Texas Mexico border.<sself>Reeeeee orange man bad!<eos
+2019-07-19 13:10:40 ip-172-31-39-133 train.py[31628] INFO outputs: <pad>ast<eos><eos>Ier with account<eos>I a would ever any relationships rep before in in your basement.<eos> wonder, I.<eos>Like� like the've Matthew into a force ch than the local prison border patro
+2019-07-19 13:10:42 ip-172-31-39-133 train.py[31628] INFO inputs : <bos>RoastMe<sself>21 y/o from Uruguay. Roast me and my grandpa glasses
+<spartner>I bet ur grandpa gave u his glasses cuz obviously u need it<sself>Most likely because he didn’t want to have to look at it anymore.<eos
+2019-07-19 13:10:42 ip-172-31-39-133 train.py[31628] INFO outputs: <pad>ast<eos><eos>I years/o w the. asts him with show barm. are<eos>N came he parentspa had u his/ asuz he he are them mostGrand people. they�'t�t have them give to look at those anymore.<eos>� are!!!
+
+
+
+2019-07-19 13:11:19 ip-172-31-39-133 train.py[31628] INFO outputs: <pad>ast<eos><eos>I love knew like i have stepped a stroke laugh from now i i friends laugh<eos><eos>You face cryrowdum......
+& this upgraded.<eos>I ur� roasted me everyIum take fun look u again, urre
+2019-07-19 13:11:19 ip-172-31-39-133 ignite.engine.engine.Engine[31628] INFO Epoch[1] Complete. Time taken: 00:00:40
+```
+
+And on local pc, try gpt2, longer context, high lr: 
+
+```sh
+python train.py \
+--model_checkpoint gpt2 \
+--fp16 O1 \
+--gradient_accumulation_steps 2 \
+--max_seq_len 512 --max_history 8 \
+--train_batch_size 3 \
+--valid_batch_size 3 \
+--n_epochs 10 \
+--num_candidates 1  \
+--mc_coef 0 \
+--dataset_path data/reddit_threads/ \
+-s RoastMe_copy --lr 1e-4
+```
+```
+Epoch [1/10]: [6852/6852] 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████, loss=1.95e+00 [26:49<00:00]2019-07-19 18:25:00 mjcdesktop ignite.engine.engine.Engine[31348] INFO Epoch[1] Complete. Time taken: 00:26:49
+2019-07-19 18:25:00 mjcdesktop ignite.engine.engine.Engine[31348] INFO Engine run starting with max_epochs=1.
+2019-07-19 18:25:02 mjcdesktop train.py[31348] INFO inputs : <bos>RoastMe_copy<spartner>Let's see what you can do ;)
+<sself>When your hair says "I'm 22 and flirty" but your crow's feet say "I'm 42 and need to pick up the kids at soccer practice"<spartner>So I'm a soccer mom? Damn, I thought I could do better than that. LOL<sself>No one said they were *your* kids. <eos
+2019-07-19 18:25:02 mjcdesktop train.py[31348] INFO outputs: <sother><eos><eos><eos><eos><eos>I's see<eos> you got do<eos><eos><eos>I you mom is "I'm a" Iatter"<eos> you hairbar feet say "I'm 22 and fl a get up a phone and school practice"<eos>You you'm 22 virg
+
+
+Epoch [2/10]: [6852/6852] 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████, loss=1.77e+00 [26:46<00:00]2019-07-19 18:52:33 mjcdesktop ignite.engine.engine.Engine[31348] INFO Epoch[2] Complete. Time taken: 00:26:46
+2019-07-19 18:52:33 mjcdesktop ignite.engine.engine.Engine[31348] INFO Engine run starting with max_epochs=1.
+2019-07-19 18:52:34 mjcdesktop train.py[31348] INFO inputs : <bos>RoastMe_copy<sself>Jewish and slightly autistic. Hitler would have a coronary.
+<spartner>If all Jews looked like you, the transpiration of the Holocaust would be justified.<sself>Damn. He asked for a roast not a forest fire.<eos
+2019-07-19 18:52:34 mjcdesktop train.py[31348] INFO outputs: <sself>ast<eos><eos><eos><eos>I, Jewish more.<eos> was be been better.<eos><eos>I Hitler the were like this, Hitler Naziscontinental would the Holocaust would be a.<eos>I, I's for this roast. a murder
+
+
+Epoch [4/10]: [6852/6852] 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████, loss=1.37e+00 [26:39<00:00]2019-07-19 19:47:24 mjcdesktop ignite.engine.engine.Engine[31348] INFO Epoch[4] Complete. Time taken: 00:26:39
+2019-07-19 19:47:24 mjcdesktop ignite.engine.engine.Engine[31348] INFO Engine run starting with max_epochs=1.
+2019-07-19 19:47:25 mjcdesktop train.py[31348] INFO inputs : <bos>RoastMe_copy<sself>Do it nerd
+<spartner>2008 called. It wants it's cringy emo haircut back.<sself>Ashley Parker asshole<eos
+2019-07-19 19:47:25 mjcdesktop train.py[31348] INFO outputs: <sself>ast<eos><eos><eos><eos>I you for!
+I was for I's to's aayey cousino...<eos>Iley Cro�.Ire!!
+
+
+
+Epoch [6/10]: [6852/6852] 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████, loss=1.00e+00 [26:23<00:00]2019-07-19 20:42:02 mjcdesktop ignite.engine.engine.Engine[31348] INFO Epoch[6] Complete. Time taken: 00:26:23
+2019-07-19 20:42:03 mjcdesktop ignite.engine.engine.Engine[31348] INFO Engine run starting with max_epochs=1.
+2019-07-19 20:42:03 mjcdesktop train.py[31348] INFO inputs : <bos>RoastMe_copy<sself>Do it nerd
+<spartner>2008 called. It wants it's cringy emo haircut back.<sself>Ashley Parker asshole<eos
+2019-07-19 20:42:03 mjcdesktop train.py[31348] INFO outputs: <sself>ast<eos><eos><eos><eos>This you with style<eos>I Olympic and I was the's timeayy asso pizza<eos>.<eos>Iley Cro is.Iityity???
+
+
+
+Epoch [8/10]: [6852/6852] 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████, loss=6.98e-01 [26:46<00:00]2019-07-19 21:36:52 mjcdesktop ignite.engine.engine.Engine[31348] INFO Epoch[8] Complete. Time taken: 00:26:46
+2019-07-19 21:36:52 mjcdesktop ignite.engine.engine.Engine[31348] INFO Engine run starting with max_epochs=1.
+2019-07-19 21:36:55 mjcdesktop train.py[31348] INFO inputs : <bos>RoastMe_copy<sself>my girlfriend and i are aspiring models! we don’t have any gigs yet, but we have 62 followers on instagram #famous #youwish give us constructive criticism (we don’t need it)
+<spartner>You two will make GREAT models! For Planned Parenthood ads encouraging abortions.<sself>Nah these two look like the spokesmen for underage pregnancy. I pity the boy the raped to get pregant at age 13. <eos
+2019-07-19 21:36:55 mjcdesktop train.py[31348] INFO outputs: <sself>ast<eos><eos><eos><eos>Thisself is I can sleeping to<eos><eos> will't�t want many plans<eos><eos> but we do a lbs on Facebookagram<eos>tforuggotllysme a criticism.like don't�t have to)<eos><eos
+
+
+```
+So I should look through the logs to see if either has decent results, and look at the LR for that.
+
+
+They are both meh, but maybe GPT2-med is better. It seems that a lower LR might be worth trying
+
+
+# working!
+
+```
+robot:This is r/roastme, not r/complimentme
+>>> Roast me
+robot:I didn't ask to be roasted.  If your too sensitive to be roasted,don't post here. 
+>>> I kill you
+robot:I was being sarcastic.  When people roast you they don't have to roast things that are literally true. It *looks* like you've offended someone.  If youre not man enough to take it,don't post here.
+>>> Roast me
+robot:You're not man enough to take it.
+>>> Roast me
+robot:You just posted on roast me.  I'm out of time and crayons.  
+>>> I love you
+robot:I think you're crayons all the way.  
+>>> Roast me more :)
+robot:And you posted on roast me 2 hours after I wrote my comment.  I crayoned it as well.
+>>> You are the worst duck I've ever fucked
+robot:Damn, you got a lot of people in your life that don't know what the fuck you are talking about.
+>>> That's because I'm busy fucking ducks
+robot:Is that what you tell your spouse when they can't take you anymore?
+>>> Y Y yesss
+robot:You have a lot of people in your life that don't know what the fuck you are talking about? 
+>>> No!
+robot:Well, you seem like a good person.  So, excuse me, I'm gonna go fuck someplace else.  You seem like a good person.  
+>>> I'm not
+robot:You seem like the type of guy to ask a girl out, and then try to play it off as a joke when she rejects you, that's kind of what I'm saying.  That's not how a relationship works. 
+>>> How does a relationship work?
+robot:Well, you see, you are talking about in this picture.  There are two people in this picture.  One is your imaginary friend, and the second is your real friend.  Now, lets talk about this. 
+>>> Ow it burns
+robot:That's not what I said.  You are a good person.  Keep being you.
+>>> Im a good guy
+robot:You are a good person.  Keep being you.
+>>> I'll keep being me
+robot:You are good at keeping things in the family.  We have you now.  
+>>> Nooo
+robot:The only thing that will EVER keep you in the family is your daddy.  He will always be the one taking the picture.
+>>> Ow it burns
+robot:I must have put it in the wrong hole.  I was trying to be mean.  
+>>> Ow my anus
+robot:Does that mean I'm a bad person?  No, you are a good person.  Keep being you.
+>>> You are chrome plated dildo
+robot:Wow.  You actually think this little dick would fit perfectly into your mouth?  Well it did me a favor.  I admit it did not check out.
+>>> Ow my mouth
+robot:I admit it did not check out.  But I'm glad you're trying to get better.  Things will get better.
+>>> How will they get better daddy?
+robot:The only way to get better is to stop taking dick in the ass.  But I'm not gonna quit trying.  I have to get better.
+>>> q
+robot:How will you get better if you stop taking dick in the ass everyday?  How will you get better if you stop using your asshole as a garage
+```
+
+`nohup python train.py --model_checkpoint gpt2-medium --fp16 O1 --gradient_accumulation_steps 3 --max_seq_len 300 --train_batch_size 5 --valid_batch_size 4 --n_epochs 20 --num_candidates 1 --mc_coef 0 --dataset_path data/reddit_threads/ -s RoastMe -s totallynotrobots -s dreams --lr 1e-4 &`
+git hash b6211b39a0024cabecfa0228c3e74fdecf248f94
+
+- [x] record working params
+- [x] copy model to my pc
+- [x] icon 
+- [ ] put on twitter & thinkcds irc?
+  - [ ] 
+- [ ] replace r/? with ?
+- [ ] make it clear who is roaster and roastee (make it random?)
