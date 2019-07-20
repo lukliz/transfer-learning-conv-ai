@@ -162,10 +162,10 @@ def comment_praw2psaw(comment_praw):
 for subreddit in args.subreddit:
 
     # Since the api often only returns 1000, lets query in monthly intervals
-    date_first = "2018-01-01"
-    date_last = "2019-01-01"
+    date_first = "2017-01-01"
+    date_last = "2019-06-01"
 
-    dates = pd.date_range(date_first, date_last, freq="3M")
+    dates = pd.date_range(date_first, date_last, freq="10D")
     date_bins = list(zip(dates[:-1], dates[1:]))
     random.shuffle(date_bins)
 
@@ -183,6 +183,8 @@ for subreddit in args.subreddit:
         logger.warning(f"No submissions within filter for subreddit found:{subreddit}")
         continue
     total_submissions = agg["subreddit"][0]["doc_count"]
+    if total_submissions > 1000:
+        logger.warning("Found more than 1000 submissions in one bin, try lowering the bin size")
 
     with tqdm(desc=subreddit, unit="submission", total=total_submissions) as prog:
 
