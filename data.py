@@ -171,12 +171,12 @@ def cache_load_utturances(ttl=360000):
 
 
 def authors2ints(authors):
-    # e.g. authors = ['paul', 'dan', 'mike', 'iv', 'iv', 'dan']
+    # e.g. authors = ['paul', 'dan', 'mike', 'iv', 'iv', 'dan'] => [0, 1, 2, 3, 4, 1]
     author2int = dict((v,k) for k,v in enumerate(set(authors)))
     return [str(author2int[author]) for author in authors]
 
 @cache_load_utturances()
-def load_utterances(personality, files, tokenizer, max_seq_len, num_candidates=10):
+def load_utterances(personality, files, tokenizer, max_seq_len, num_candidates=3):
     utterances = []
     for file in tqdm(files, desc=f"Loading {personality}", unit="thread"):
         # load
@@ -187,10 +187,11 @@ def load_utterances(personality, files, tokenizer, max_seq_len, num_candidates=1
             continue
 
         # Anytree seems to be v. slow of theads with lots of comments (>1000)
+        # FIXME (wassname)
         comments_all = len(
             list(itertools.chain(*list(thread["comment_dict"].values())))
         )
-        if comments_all > 1000:
+        if comments_all > 2000:
             logger.debug(
                 f"Skipping {personality} thread with many ({comments_all}) comments"
             )
@@ -310,10 +311,10 @@ def threads_to_utterances(splits, tokenizer, max_seq_len):
                 files=files,
                 tokenizer=tokenizer,
                 max_seq_len=max_seq_len,
-                num_candidates=10,
+                num_candidates=3,
             )
             if utterances_dict['utterances']:
-            dataset2[split].append(utterances_dict)
+                dataset2[split].append(utterances_dict)
 
             logger.info(
                 f"Utterances for {split} & /r/{personality}: {len(utterances_dict['utterances'])}"
