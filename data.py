@@ -237,13 +237,13 @@ def load_utterances(personality, files, tokenizer, max_seq_len, num_candidates=1
                 ]
                 distractors = [thing_by_id[d_id] for d_id in distractor_ids]
 
-                # Filter some of the bad data out, yeah it's a hack, but some is very usefull
+                # Filter some of the bad data out, yeah it's a hack, but some is very useful
                 filters = [
                     lambda x: "[deleted]" not in x.get("body", ""),
                     lambda x: "[removed]" not in x.get("body", ""),
                     lambda x: x.get("author", "") != "[removed]",
 
-                    # Filter out the repetative mod and sticky comments
+                    # Filter out the repetitive mod and sticky comments
                     lambda x: x.get("author", "") != "AutoModerator",
                     lambda x: not x.get("stickied", False),
 
@@ -258,9 +258,9 @@ def load_utterances(personality, files, tokenizer, max_seq_len, num_candidates=1
                     # the output tends to be repetitive and loop, lets avoid that a bit by filtering out v. repetitive replies
                     lambda x: max([fuzz.ratio(x.get("body", ""), h)/100 for h in history]) < 0.75
                 ]
-                for f in filters:
-                    replies = filter(f, replies)
-                    distractors = filter(f, distractors)
+                for fn, f in enumerate(filters):
+                    replies = list(filter(f, replies))
+                    distractors = list(filter(f, distractors))
 
                 # Format "things" from reddit
                 replies = [
@@ -314,7 +314,7 @@ def threads_to_utterances(splits, tokenizer, max_seq_len):
                 max_seq_len=max_seq_len,
                 num_candidates=10,
             )
-
+            if utterances_dict['utterances']:
             dataset2[split].append(utterances_dict)
 
             logger.info(
