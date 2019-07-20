@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+"""
+python mybot_plugin.py
+python interact_server.py  --max_history 4 --top_p 0.8  --fp16 O2 --model_checkpoint runs/Jul19_14-38-58_ip-172-31-39-133_goood
+"""
 from irc3.plugins.command import command
 import irc3
 import zmq
@@ -16,6 +20,8 @@ logger = logging.getLogger(__file__)
 coloredlogs.install(level=logging.DEBUG)
 
 logging.getLogger('zmqtest').setLevel(logging.DEBUG)
+
+secrets = json.load(open('.secrets.json'))
 
 @irc3.plugin
 class Plugin:
@@ -63,6 +69,7 @@ class Plugin:
             logger.debug("payload %s", payload)
             self.socket.send_json(payload)
             reply = self.socket.recv_json()["data"]
+            self.history[name].append(reply)
             msg = f'@{name}: {reply}'
             self.bot.privmsg(channel, msg)
             logger.info("out msg: channel=%s, msg=%s", channel, msg)
@@ -84,8 +91,10 @@ class Plugin:
 def main():
     # instanciate a bot
     config = dict(
-        nick='roastme_robot', autojoins=['#botwars'],
-        host='irc.freenode.net', port=6667, ssl=False,
+        nick=secrets['nick'],
+        password=secrets['password'],
+        autojoins=secrets['channels'],
+        host=secrets['server'], port=6667, ssl=False,
         includes=[
             'irc3.plugins.core',
             'irc3.plugins.command',
@@ -93,8 +102,6 @@ def main():
             __name__,  # this register MyPlugin
         ],
     )
-    import irc3.testing
-
     bot = irc3.IrcBot.from_config(config)
     bot.run(forever=True)
 

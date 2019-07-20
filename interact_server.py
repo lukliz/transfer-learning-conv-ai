@@ -231,7 +231,7 @@ def run():
     socket.bind("tcp://127.0.0.1:%s" % port)
     socket.setsockopt(zmq.LINGER, 0) # timeout
     logger.info(f"bind ZMQ server on port {port}")
-    time.sleep(10)
+    time.sleep(1)
     socket.send_string("Server ready")
 
     while True:
