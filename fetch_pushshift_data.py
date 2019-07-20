@@ -165,7 +165,7 @@ for subreddit in args.subreddit:
     date_first = "2017-01-01"
     date_last = "2019-06-01"
 
-    dates = pd.date_range(date_first, date_last, freq="10D")
+    dates = pd.date_range(date_first, date_last, freq="5D")
     date_bins = list(zip(dates[:-1], dates[1:]))
     random.shuffle(date_bins)
 
@@ -183,8 +183,6 @@ for subreddit in args.subreddit:
         logger.warning(f"No submissions within filter for subreddit found:{subreddit}")
         continue
     total_submissions = agg["subreddit"][0]["doc_count"]
-    if total_submissions > 1000:
-        logger.warning("Found more than 1000 submissions in one bin, try lowering the bin size")
 
     with tqdm(desc=subreddit, unit="submission", total=total_submissions) as prog:
 
@@ -212,7 +210,11 @@ for subreddit in args.subreddit:
             agg = next(submissions)
             if not agg["subreddit"]:
                 continue
-            doc_count = agg["subreddit"][0]["doc_count"]
+            bin_submissions = agg["subreddit"][0]["doc_count"]
+            bin_submissions = agg["subreddit"][0]["doc_count"]
+            if bin_submisisons > 1000:
+                # TODO we can do this with smarts
+                logger.warning(f"Found more than 1000 ({bin_submissions}) submissions in one bin, try lowering the bin size: {before}-{after}")
 
             out_dir = data_dir.joinpath(subreddit)
             os.makedirs(out_dir, exist_ok=True)
