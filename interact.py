@@ -75,7 +75,7 @@ def sample_sequence(personality, history, tokenizer, model, args, current_output
         current_output = []
 
     for i in range(args.max_length):
-        authors =  [[i%2] for i in range(len(history))]
+        authors =  [str(i%2) for i in range(len(history))]
         instance, sequence = build_input_from_segments(
             personality, history, current_output, authors, tokenizer, with_eos=False
         )
