@@ -235,7 +235,6 @@ def get_data_loaders(args, tokenizer):
         TensorDataset(*tensor_datasets["train"]),
         TensorDataset(*tensor_datasets["valid"]),
     )
-    valid_dataset = valid_dataset[:int(args.max_epoch_length // 8)]
     
     if args.distributed:
         train_dataset = train_dataset[:args.max_epoch_length]
@@ -245,13 +244,14 @@ def get_data_loaders(args, tokenizer):
             if args.distributed
             else None
         )
+        valid_sampler = (
+            torch.utils.data.distributed.DistributedSampler(valid_dataset)
+            if args.distributed
+            else None
+        )
     else:
         train_sampler = torch.utils.data.RandomSampler(train_dataset, replacement=True, num_samples=args.max_epoch_length)
-    valid_sampler = (
-        torch.utils.data.distributed.DistributedSampler(valid_dataset)
-        if args.distributed
-        else None
-    )
+        valid_sampler = torch.utils.data.RandomSampler(valid_dataset, replacement=True, num_samples=int(args.max_epoch_length//8))
     train_loader = DataLoader(
         train_dataset,
         sampler=train_sampler,
