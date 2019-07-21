@@ -84,14 +84,14 @@ def thread2tree(comment_dict, submission):
 
     # Make a tree from comments dict
     tree_root = Node(submission_id)
-    submission_id = get_id_for_comments(submission)
     nodes_by_id = {submission_id: tree_root}
     thing_by_id = {submission_id: submission}
     for thing in queue[1:]:
+        tid = get_id_for_comments(thing)
         parent = nodes_by_id[thing["parent_id"]]
-        n = Node(get_id_for_comments(thing), parent=parent)
-        nodes_by_id[get_id_for_comments(thing)] = n
-        thing_by_id[get_id_for_comments(thing)] = thing
+        n = Node(tid, parent=parent)
+        nodes_by_id[tid] = n
+        thing_by_id[tid] = thing
     return nodes_by_id, thing_by_id
 
 
@@ -175,6 +175,15 @@ def authors2ints(authors):
     author2int = dict((v,k) for k,v in enumerate(set(authors)))
     return [str(author2int[author]) for author in authors]
 
+
+def submission_ok(submission, subreddit):
+    return ([
+        submission.get('link_flair_css_class', None)=='meta', # Avoid meta posts
+        submission['stickied'], # Avoid stickies
+        submission['subreddit'].lower() in subreddit.lower(), # Some seem to be the wrong subreddit
+        submission['author_flair_css_class'] == 'mod' # avoid mod posts
+    ])
+
 @cache_load_utturances()
 def load_utterances(personality, files, tokenizer, max_seq_len, num_candidates=3):
     utterances = []
@@ -186,14 +195,15 @@ def load_utterances(personality, files, tokenizer, max_seq_len, num_candidates=3
             logger.warning(f"Exception opening {file}, {e}")
             continue
 
-        # Anytree seems to be v. slow of theads with lots of comments (>1000)
-        # FIXME (wassname)
+        if not submission_ok(thread['submission'], personality):
+            continue
+
         comments_all = len(
             list(itertools.chain(*list(thread["comment_dict"].values())))
         )
-        if comments_all > 2000:
+        if comments_all > 4000: # a thread of 4000 takes  1m. 52 takes 72ms
             logger.debug(
-                f"Skipping {personality} thread with many ({comments_all}) comments"
+                f"Skipping loading {personality} thread with many ({comments_all}) comments due to performance problems"
             )
             continue
         try:
@@ -253,6 +263,13 @@ def load_utterances(personality, files, tokenizer, max_seq_len, num_candidates=3
 
                     # Also filter out op? In roast me they do not do roasting
                     lambda r: r['author']!=history_things[0]['author'],
+
+                    # Meta roast comment often include
+                    lambda x: "roastme " not in x.get("body", "").lower(),
+                    lambda x: "vote " not in x.get("body", ""),
+
+                    # ignore negative karma
+                    lambda x: x.get("score", 1)>0,
 
                     # the output tends to be repetitive and loop, lets avoid that a bit by filtering out v. repetitive replies
                     lambda x: max([fuzz.ratio(x.get("body", ""), h)/100 for h in history]) < 0.75
