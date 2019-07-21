@@ -235,11 +235,18 @@ def get_data_loaders(args, tokenizer):
         TensorDataset(*tensor_datasets["train"]),
         TensorDataset(*tensor_datasets["valid"]),
     )
-    train_sampler = (
-        torch.utils.data.distributed.DistributedSampler(train_dataset)
-        if args.distributed
-        else None
-    )
+    valid_dataset = valid_dataset[:int(args.max_epoch_length // 8)]
+    
+    if args.distributed:
+        train_dataset = train_dataset[:args.max_epoch_length]
+    
+        train_sampler = (
+            torch.utils.data.distributed.DistributedSampler(train_dataset)
+            if args.distributed
+            else None
+        )
+    else:
+        train_sampler = torch.utils.data.RandomSampler(train_dataset, replacement=True, num_samples=args.max_epoch_length)
     valid_sampler = (
         torch.utils.data.distributed.DistributedSampler(valid_dataset)
         if args.distributed
@@ -249,7 +256,7 @@ def get_data_loaders(args, tokenizer):
         train_dataset,
         sampler=train_sampler,
         batch_size=args.train_batch_size,
-        shuffle=(not args.distributed),
+        # shuffle=(not args.distributed),
     )
     valid_loader = DataLoader(
         valid_dataset,
@@ -307,6 +314,12 @@ def train():
         type=int,
         default=4,
         help="Number of previous exchanges to keep in history",
+    )
+    parser.add_argument(
+        "--max_epoch_length",
+        type=int,
+        default=100000000000,
+        help="Limit epoch length",
     )
     parser.add_argument(
         "--train_batch_size", type=int, default=1, help="Batch size for training"
