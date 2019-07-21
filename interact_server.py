@@ -232,7 +232,10 @@ def run():
     socket.setsockopt(zmq.LINGER, 0) # timeout
     logger.info(f"bind ZMQ server on port {port}")
     time.sleep(1)
-    socket.send_string("Server ready")
+    server_config = dict(args=args.__dict__, training_args=training_args.__dict__)
+    socket.send_json(server_config)
+
+    # TODO send setup config on specific message
 
     while True:
         logger.info('ZMQ waiting to receive')
