@@ -4,9 +4,12 @@ import logging
 import math
 import gc
 import os
+import sys
 import itertools
+import datetime
 import functools
 import random
+from pathlib import Path
 from argparse import ArgumentParser
 from collections import defaultdict
 from itertools import chain
@@ -361,15 +364,23 @@ def train():
     )
     args = parser.parse_args()
 
-    # logging is set to INFO (resp. WARN) for main (resp. auxiliary) process. logger.info => log main process only, logger.warning => log all processes
+    ts = datetime.datetime.utcnow().strftime('%Y%m%d_%H-%M-%S')
+    logdir = Path(f'runs/{ts}')
+    logdir.mkdir()
+
     logging.basicConfig(
-        level=logging.INFO if args.local_rank in [-1, 0] else logging.WARN
+        level=logging.INFO  if args.local_rank in [-1, 0] else logging.WARN, 
+        # format='[{%(filename)s:%(lineno)d} %(levelname)s - %(message)s',
+        handlers=[
+            logging.FileHandler(filename=f'{logdir}/train_{args.local_rank}.log'),
+            logging.StreamHandler(sys.stdout)
+        ]
     )
+    coloredlogs.install(level=logging.INFO if args.local_rank in [-1, 0] else logging.WARN)
     logger.warning(
         "Running process %d", args.local_rank
     )  # This is a logger.warning: it will be printed by all distributed processes
     logger.info("Arguments: %s", pformat(args))
-    coloredlogs.install()
 
     # Initialize distributed training if needed
     args.distributed = args.local_rank != -1
@@ -552,7 +563,7 @@ def train():
             ),
         )
 
-        tb_logger = TensorboardLogger(log_dir=None)
+        tb_logger = TensorboardLogger(log_dir=logdir)
         tb_logger.attach(
             trainer,
             log_handler=OutputHandler(tag="training", metric_names=["loss"]),
@@ -574,7 +585,7 @@ def train():
         )
 
         checkpoint_handler = ModelCheckpoint(
-            tb_logger.writer.logdir, "checkpoint", save_interval=1, n_saved=3
+            logdir, "checkpoint", save_interval=1, n_saved=3
         )
         trainer.add_event_handler(
             Events.EPOCH_COMPLETED,
@@ -582,11 +593,11 @@ def train():
             {"mymodel": getattr(model, "module", model)},
         )  # "getattr" take care of distributed encapsulation
 
-        torch.save(args, tb_logger.writer.logdir + "/model_training_args.bin")
+        torch.save(args, logdir / "model_training_args.bin")
         getattr(model, "module", model).config.to_json_file(
-            os.path.join(tb_logger.writer.logdir, CONFIG_NAME)
+            os.path.join(logdir, CONFIG_NAME)
         )
-        tokenizer.save_vocabulary(tb_logger.writer.logdir)
+        tokenizer.save_vocabulary(logdir)
 
     # Run the training
     trainer.run(train_loader, max_epochs=args.n_epochs)
@@ -595,7 +606,7 @@ def train():
     if args.local_rank in [-1, 0] and args.n_epochs > 0:
         os.rename(
             checkpoint_handler._saved[-1][1][-1],
-            os.path.join(tb_logger.writer.logdir, WEIGHTS_NAME),
+            logdir / WEIGHTS_NAME,
         )  # TODO (huggingface): PR in ignite to have better access to saved file paths (cleaner)
         tb_logger.close()
 
