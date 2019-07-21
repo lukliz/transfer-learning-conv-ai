@@ -188,17 +188,6 @@ for subreddit in args.subreddit:
     with tqdm(desc=subreddit, unit="submission", total=total_submissions) as prog:
 
         for after, before in date_bins:
-            logger.debug(
-                "%s",
-                dict(
-                    subreddit=subreddit,
-                    num_comments=">10",
-                    after=after,
-                    before=before,
-                    sort_type="num_comments",
-                ),
-            )
-
             submissions = api.search_submissions(
                 subreddit=subreddit,
                 num_comments=">10",
@@ -212,6 +201,17 @@ for subreddit in args.subreddit:
             if not agg["subreddit"]:
                 continue
             bin_submissions = agg["subreddit"][0]["doc_count"]
+
+            logger.debug(
+                "bin_submissions=%s\n%s", bin_submissions,
+                dict(
+                    subreddit=subreddit,
+                    num_comments=">10",
+                    after=after,
+                    before=before,
+                    sort_type="num_comments",
+                ),
+            )
             if bin_submissions > 1000:
                 # TODO we can do this with smarts
                 logger.warning(f"Found more than 1000 ({bin_submissions}) submissions in one bin, try lowering the bin size: {before}-{after}")
@@ -232,12 +232,12 @@ for subreddit in args.subreddit:
                         submission["id"]
                     )
                     if len(submission_comment_ids) > 3000:
-                        logger.debug(f"Skipping thread with large amount of commments {submission["id"]}")
+                        logger.debug(f"Skipping thread with large amount of commments {submission['id']}")
                         continue  # because it's too slow to parse these large trees with the current code
                     comment_dict = collections.defaultdict(list)
 
                     # Batch to avoid 414: Url too long
-                    batch_size = 200
+                    batch_size = 400 # We can do 1000 at a time
                     for i in range(0, len(submission_comment_ids), batch_size):
                         batch_ids = submission_comment_ids[i : i + batch_size]
 
@@ -271,7 +271,7 @@ for subreddit in args.subreddit:
                                 dict(submission=submission, comment_dict=comment_dict),
                                 out_jsn.open("wb"),
                             )
-                            logger.debug("writing pickle %s", out_jsn)
+                            # logger.debug("writing pickle %s", out_jsn)
 
                             # format
                             # text = format_comments_dict(comment_dict, submission)
