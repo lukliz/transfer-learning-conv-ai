@@ -177,10 +177,11 @@ def authors2ints(authors):
 
 
 def submission_ok(submission, subreddit):
-    return ([
+    return not any([
+        submission.get('distinguished', False),
         submission.get('link_flair_css_class', None)=='meta', # Avoid meta posts
         submission['stickied'], # Avoid stickies
-        submission['subreddit'].lower() in subreddit.lower(), # Some seem to be the wrong subreddit
+        submission['subreddit'].lower() not in subreddit.lower(), # Some seem to be the wrong subreddit
         submission['author_flair_css_class'] == 'mod' # avoid mod posts
     ])
 
