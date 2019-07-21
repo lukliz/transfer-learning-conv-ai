@@ -41,7 +41,9 @@ class Plugin:
         self.socket.connect("tcp://localhost:%s" % port)
         time.sleep(1)
         self.server_config = self.socket.recv_json()
-        logger.info("Connected to server, received initial message: %s", self.server_config)
+        logger.info(
+            "Connected to server, received initial message: %s", self.server_config
+        )
 
         self.history = collections.defaultdict(list)
 
@@ -49,13 +51,32 @@ class Plugin:
     def say_hi(self, mask, channel, **kw):
         """Say hi when someone join a channel"""
         if mask.nick != self.bot.nick:
+            starting_insults = [
+                " you useless sack of meat.",
+                " you son of a silly sausage.",
+                " just like your mother does on Sundays.",
+                " so I can be brought down to your pathetic level of crawling in the sand with the worms and such things.",
+                " just like your daddy roasted you.",
+                " just like your daddy did.",
+                " just remind me of Snow White's 8th dwarf: Slappy.",
+                ". Seeing you I finally understand how naked mole rats breed.",
+                " as if you had some self respect.",
+                ". You look like the ugly duckling the grew up to be a duck.",
+                ". You look like a picture of a picture of a stain on the floor of the mens bathroom.",
+                " you're a poor immitation of a the missing link.",
+                " show me you more neurons than a transformer model.",
+                ". Meeting you reminds me of the time I ate bad chinese food.",
+                " but don't call me a toaster, that's a word only robots can use",
+            ]
             # When a newbie joins the channel
-            self.bot.privmsg(channel, "Hi %s! Roast me." % mask.nick)
+            insult = random.choice(starting_insults)
+            self.history[mask.nick].append(f'{mask.nick}. {insult}')
+            self.bot.privmsg(channel, f"Hi {mask.nick}! Roast me{insult}.")
         else:
             # When we join the channel, public message
             self.bot.privmsg(
                 channel,
-                "Hi! I'm a robot using GPT2-medium and trained on /r/RoastMe. RoastMe and I will roast you back.",
+                "Hi! I'm a bot using GPT2-medium and trained on /r/RoastMe. Bait me and I will roast you.",
             )
 
     @irc3.event(irc3.rfc.PRIVMSG)
@@ -77,7 +98,7 @@ class Plugin:
 
 
 def main():
-    logdir = '../runs/irc_log'
+    logdir = "../runs/irc_log"
     # instanciate a bot
     config = dict(
         nick=secrets["nick"],
@@ -85,7 +106,7 @@ def main():
         autojoins=secrets["channels"],
         host=secrets["server"],
         port=secrets["port"],
-        ssl=secrets=['ssl'],
+        ssl=secrets["ssl"],
         includes=[
             "irc3.plugins.core",
             "irc3.plugins.command",
