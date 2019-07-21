@@ -72,6 +72,7 @@ print(args)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__file__)
+logger.setLevel(logging.DEBUG)
 
 
 data_dir = Path(args.out_path)
@@ -211,8 +212,7 @@ for subreddit in args.subreddit:
             if not agg["subreddit"]:
                 continue
             bin_submissions = agg["subreddit"][0]["doc_count"]
-            bin_submissions = agg["subreddit"][0]["doc_count"]
-            if bin_submisisons > 1000:
+            if bin_submissions > 1000:
                 # TODO we can do this with smarts
                 logger.warning(f"Found more than 1000 ({bin_submissions}) submissions in one bin, try lowering the bin size: {before}-{after}")
 
@@ -232,6 +232,7 @@ for subreddit in args.subreddit:
                         submission["id"]
                     )
                     if len(submission_comment_ids) > 3000:
+                        logger.debug(f"Skipping thread with large amount of commments {submission["id"]}")
                         continue  # because it's too slow to parse these large trees with the current code
                     comment_dict = collections.defaultdict(list)
 
