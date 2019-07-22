@@ -853,3 +853,35 @@ IRC BOT
 - predict
 - send response
 - repeat
+remove "vote" "roastme" "roast" 
+
+Try with cleaned and larger dataset, large batch, and more epoch
+
+
+```bash
+# On ec2 resume, large batch
+nohup python train.py --fp16 O2 --max_seq_len 300 --num_candidates 1 --gradient_accumulation_steps 1 --train_batch_size 10 --valid_batch_size 6 --lr 1e-4 --mc_coef 0 --max_history 8 --n_epochs 40 --max_epoch_length 40000 --dataset_path data/reddit_threads/ -s RoastMe -s totallynotrobots -s singularity --model_checkpoint runs/Jul19_14-38-58_ip-172-31-39-133_gpt2_goood/ &> output.log & 
+```
+
+
+on my pc resume, only roast
+```bash
+python train.py \
+--gradient_accumulation_steps 5 --fp16 O2 \
+--max_seq_len 256 --max_history 8 --max_epoch_length 20000 \
+--train_batch_size 2 \
+--valid_batch_size 2 \
+--n_epochs 60 \       
+--num_candidates 1  \
+--mc_coef 0 --lr 1e-5 \
+--dataset_path data/reddit_threads/ \
+-s RoastMe \     
+--model_checkpoint runs/Jul19_14-38-58_ip-172-31-39-133_gpt2-medium_goood
+
+```
+
+Note I can't load from prev checkpoint? I just get ???. Also I'm trying with O2 as well, since using half weights seems fine (judging from the bert repo). But I'll check the loss against nohup.out.
+
+- fp O3 still doesn't work even with fp32 batch norm. O2 seems to and lets my use 2x batch and 2x as fast. 01 is 2x as fast
+
+
