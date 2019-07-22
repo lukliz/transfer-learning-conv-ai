@@ -34,7 +34,7 @@ class Plugin:
         self.bot = bot
 
         # Zeromq to pytorch server
-        port = "5586"
+        port = secrets["zeromq"]["port"]
         logger.info(f"Joining Zeromq server in {port}")
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.PAIR)
@@ -101,12 +101,12 @@ def main():
     logdir = "../runs/irc_log"
     # instanciate a bot
     config = dict(
-        nick=secrets["nick"],
-        password=secrets["password"],
-        autojoins=secrets["channels"],
-        host=secrets["server"],
-        port=secrets["port"],
-        ssl=secrets["ssl"],
+        nick=secrets["irc"]["nick"],
+        password=secrets["irc"]["password"],
+        autojoins=secrets["irc"]["channels"],
+        host=secrets["irc"]["server"],
+        port=secrets["irc"]["port"],
+        ssl=secrets["irc"]["ssl"],
         includes=[
             "irc3.plugins.core",
             "irc3.plugins.command",
