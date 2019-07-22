@@ -159,6 +159,12 @@ def run():
         help="Maximum length of the output utterances",
     )
     parser.add_argument(
+        "--port",
+        type=int,
+        default=5586,
+        help="zeromq port",
+    )
+    parser.add_argument(
         "--min_length",
         type=int,
         default=20,
@@ -225,12 +231,12 @@ def run():
     print("training personalities", [tokenizer.decode(chain(*p)) for p in personalities])
 
 
-    port = "5586"
+    port = str(args.port)
     context = zmq.Context()
     socket = context.socket(zmq.PAIR)
+    logger.info(f"bind ZMQ server on port {port}")
     socket.bind("tcp://127.0.0.1:%s" % port)
     socket.setsockopt(zmq.LINGER, 0) # timeout
-    logger.info(f"bind ZMQ server on port {port}")
     time.sleep(1)
     server_config = dict(args=args.__dict__, training_args=training_args.__dict__)
     socket.send_json(server_config)
@@ -240,14 +246,18 @@ def run():
     while True:
         logger.info('ZMQ waiting to receive')
         msg = socket.recv_json()
-        logger.info('msg %s', msg)
-        with torch.no_grad():
-            personality = [tokenizer.encode(msg['personality'])]
-            history = [tokenizer.encode(h) for h in msg['history']]
-            out_ids = sample_sequence(personality, history, tokenizer, model, args)
-            out_text = tokenizer.decode(out_ids, skip_special_tokens=True)
-        socket.send_json(dict(data=out_text))
-        time.sleep(1)
+        try:
+            logger.info('msg %s', msg)
+            with torch.no_grad():
+                personality = [tokenizer.encode(msg['personality'])]
+                history = [tokenizer.encode(h) for h in msg['history']]
+                out_ids = sample_sequence(personality, history, tokenizer, model, args)
+                out_text = tokenizer.decode(out_ids, skip_special_tokens=True)
+            socket.send_json(dict(data=out_text))
+            time.sleep(1)
+        except Exception as e:
+            logger.warn("Error while processing message: %s", e)
+            socket.send_json(dict(data="ERROR: Emotion.exe has stopped responding."))
 
 
 if __name__ == "__main__":
