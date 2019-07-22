@@ -424,7 +424,7 @@ def train():
         else OpenAIGPTDoubleHeadsModel
     )
     model = model_class.from_pretrained(args.model_checkpoint)
-    # model.set_num_special_tokens(len(SPECIAL_TOKENS))
+    model.set_num_special_tokens(len(SPECIAL_TOKENS))
     model.to(args.device)
     t_total = len(train_loader) // args.gradient_accumulation_steps * args.n_epochs
     optimizer = OpenAIAdam(model.parameters(), lr=args.lr)
@@ -445,7 +445,7 @@ def train():
         lm_loss, mc_loss = model(*batch)
         loss = (
             lm_loss * args.lm_coef + mc_loss * args.mc_coef
-        ) / args.gradient_accumulation_steps
+        ) / args.gradient_accumulation_steps / args.train_batch_size
         if args.fp16:
             with amp.scale_loss(loss, optimizer) as scaled_loss:
                 scaled_loss.backward()
