@@ -242,6 +242,8 @@ def run():
     socket.send_json(server_config)
 
     # TODO send setup config on specific message
+    def encode(s):
+        return tokenizer.encode(s)[:tokenizer.max_length]
 
     while True:
         logger.info('ZMQ waiting to receive')
@@ -249,8 +251,8 @@ def run():
         try:
             logger.info('msg %s', msg)
             with torch.no_grad():
-                personality = [tokenizer.encode(msg['personality'])]
-                history = [tokenizer.encode(h) for h in msg['history']]
+                personality = [encode(msg['personality'])]
+                history = [encode(h) for h in msg['history']]
                 out_ids = sample_sequence(personality, history, tokenizer, model, args)
                 out_text = tokenizer.decode(out_ids, skip_special_tokens=True)
             socket.send_json(dict(data=out_text))
