@@ -378,7 +378,8 @@ def train():
     args = parser.parse_args()
 
     ts = datetime.datetime.utcnow().strftime('%Y%m%d_%H-%M-%S')
-    logdir = Path(f'runs/{ts}')
+    model_type_name = 'gpt2' if 'gpt2' in args.model_checkpoint else 'gpt'
+    logdir = Path(f'runs/{ts}_{model_type_name}')
     logdir.mkdir()
 
     logging.basicConfig(
@@ -423,7 +424,7 @@ def train():
         else OpenAIGPTDoubleHeadsModel
     )
     model = model_class.from_pretrained(args.model_checkpoint)
-    model.set_num_special_tokens(len(SPECIAL_TOKENS))
+    # model.set_num_special_tokens(len(SPECIAL_TOKENS))
     model.to(args.device)
     t_total = len(train_loader) // args.gradient_accumulation_steps * args.n_epochs
     optimizer = OpenAIAdam(model.parameters(), lr=args.lr)
