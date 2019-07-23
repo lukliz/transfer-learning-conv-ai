@@ -120,7 +120,7 @@ def collect_thread_files(data_dir, subreddits):
                 splits["valid"][subreddit] = valid_files
                 splits["test"][subreddit] = test_files
             else:
-                logger.info(f"subreddit not in filter /r/{subreddit} (with {len(subreddit_files):10d})")
+                logger.info(f"{len(subreddit_files):10d} threads from /r/{subreddit} (skipping due to filter)")
 
     num_train_examples = len(list(itertools.chain(*list(splits["train"].values()))))
     if len(splits["train"]) == 0 or num_train_examples < 10:
