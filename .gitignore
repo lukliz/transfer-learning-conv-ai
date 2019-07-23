@@ -4,6 +4,7 @@
 /data
 /dataset_cache*
 /runs/
+/logs/
 ParlAI/
 __pycache__
 /.secrets

@@ -20,7 +20,7 @@ logging.basicConfig(
     level=logging.INFO, 
     format='[{%(filename)s:%(lineno)d} %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler(filename=f'slack_bot_{ts}.log'),
+        logging.FileHandler(filename=f'../logs/slack_bot_{ts}.log'),
         logging.StreamHandler(sys.stdout)
     ]
 )

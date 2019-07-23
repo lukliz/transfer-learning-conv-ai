@@ -885,3 +885,76 @@ Note I can't load from prev checkpoint? I just get ???. Also I'm trying with O2 
 - fp O3 still doesn't work even with fp32 batch norm. O2 seems to and lets my use 2x batch and 2x as fast. 01 is 2x as fast
 
 
+
+Trained a roaste2 bot, and techsupport bot+compliments.
+
+
+
+    robot:Right click and select "playback devices". 
+    >>> I did, there was nothing there
+
+    robot:Ah, so you have to select the video file and right click the video to select it. 
+    >>> There is no video file, you send me to a broken youtube link
+
+    robot:Ah, so you have to select the video file and right click it to select it. 
+    >>> Tried that, didn't work
+
+    robot:Have you tried another browser? 
+    >>> No, I'll try safari. Nope it didn't work
+
+    robot:Ah, that's a shame. I'm sorry, I'm really sorry. 
+    >>> Thanks, what about my gpu error?
+
+    robot:What about it not showing up? 
+    >>> Well it's a cuda assert error, what should I do about that?
+
+    robot:What GPU do you have? If it's not the GPU one, it should be fine. 
+
+    If it's a gpu issue, it could be that the monitor isn't projecting the right resolution/refresh rate. 
+    >>> It's a nvidia 2080 ti, but I'm only using it for training machine learning, not for a monitor, good guess though
+
+    robot:Yeah, I'm dumb. 
+
+    Do you have another GPU you can use for a comparison? 
+
+    Are you using the same monitor as the computer? 
+    >>> I do have another and it seems to work. Neither gpu is hooked up to a computer
+
+    robot:What's the GPU load at the moment? 
+    >>> It's 90%
+
+    robot:90%? 
+
+    What's the current load? 
+
+    Is this a desktop with the GPU plugged in? 
+    >>> Oh it wasn't plugged, you saved me :), thanks my robot hero
+
+    robot:Yeah, it's fine. 
+
+    What's the last thing you did that wasn't a complete mess? 
+    >>> Being born probobly
+
+    robot:Yeah, it's fine. 
+
+    What's the last thing you did that wasn't a complete mess? 
+    >>> Taking my first step, oh nope that was a mess too
+
+    robot:Well, it's not a mess. 
+
+    You saved me. 
+
+    You're doing good. 
+
+    You're going to get through this. 
+    >>> Thanks bot :)
+
+    robot:You're welcome. 
+
+    I'm going to sleep now. 
+
+    I'm going to leave this comment here:
+
+    https://www.reddit.com/r/techsupport/comments/33evdi/suggested_reading_official_malware_removal_guide/
+
+

@@ -19,7 +19,14 @@ from irc3.plugins.command import command
 os.sys.path.append('..')
 from interact_server import ModelAPI
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(
+    level=logging.INFO, 
+    format='[{%(filename)s:%(lineno)d} %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler(filename=f'../logs/irc_bot_{ts}.log'),
+        logging.StreamHandler(sys.stdout)
+    ]
+)
 logger = logging.getLogger(__file__)
 coloredlogs.install(level=logging.DEBUG)
 
