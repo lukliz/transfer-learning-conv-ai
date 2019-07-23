@@ -10,6 +10,7 @@ __pycache__
 /.cache
 /notebooks
 .secrets.json
+/docs
 
 # Created by https://www.gitignore.io/api/git,code,linux,python,jupyternotebooks
 # Edit at https://www.gitignore.io/?templates=git,code,linux,python,jupyternotebooks

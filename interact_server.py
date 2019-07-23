@@ -40,18 +40,20 @@ class ModelAPI(object):
         self.socket = context.socket(zmq.PAIR)
         self.socket.connect("tcp://localhost:%s" % port)
         time.sleep(1)
-        server_config = self.socket.recv_json()
-        logger.info("Connected to server, received initial message: %s", server_config)
+        self.server_config = self.socket.recv_json()
+        logger.info("Connected to server, received initial message: %s", self.server_config)
         self.history = collections.defaultdict(list)
 
     def reset(self, name):
         self.history[name] = []
         return f'<reset memory of {name}>'
 
-    def gen_roast(self, reply, name):
+    def roast(self, reply, name, personality=None):
         # return '$ROAST'
         self.history[name].append(reply)
-        personality = random.choice(['RoastMe', 'totallynotrobots', 'dreams'])
+        if personality is None:
+            # Choose a random conditional personality from training options
+            personality = random.choice(self.server_config["training_args"]["subreddit"])
         payload = dict(personality=personality, history=self.history[name])
         logger.debug("payload %s", payload)
         self.socket.send_json(payload)

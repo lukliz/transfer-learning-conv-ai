@@ -45,7 +45,7 @@ def say_hello(**payload):
     if 'text' in data and 'user' in data and not 'subtype' in data:
         body = data['text']
         name = data['user']
-        msg = model_api.gen_roast(body, name)
+        msg = model_api.roast(body, name)
         web_client.chat_postMessage(
             channel=channel_id,
             text=msg,

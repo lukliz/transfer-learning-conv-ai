@@ -22,7 +22,7 @@ while True:
         print(f"{crayons.red('Prompt should not be empty!')}")
         raw_text = input(f"{crayons.green('>>> ')}")
 
-    out_text = model_api.gen_roast(raw_text, name)
+    out_text = model_api.roast(raw_text, name)
 
     if raw_text == "RESET":
         out_text = model_api.reset(name)
