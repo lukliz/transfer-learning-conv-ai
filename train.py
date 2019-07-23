@@ -572,7 +572,7 @@ def train():
         pbar.attach(trainer, metric_names=["loss"])
         evaluator.add_event_handler(
             Events.COMPLETED,
-            lambda _: pbar.log_message(
+            lambda _: logger.info(
                 "Validation: %s" % pformat(evaluator.state.metrics)
             ),
         )
