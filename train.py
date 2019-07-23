@@ -235,10 +235,10 @@ def get_data_loaders(args, tokenizer):
         TensorDataset(*tensor_datasets["train"]),
         TensorDataset(*tensor_datasets["valid"]),
     )
-    
+
     if args.distributed:
         train_dataset = train_dataset[:args.max_epoch_length]
-    
+
         train_sampler = (
             torch.utils.data.distributed.DistributedSampler(train_dataset)
             if args.distributed
@@ -383,7 +383,7 @@ def train():
     logdir.mkdir()
 
     logging.basicConfig(
-        level=logging.INFO  if args.local_rank in [-1, 0] else logging.WARN, 
+        level=logging.INFO  if args.local_rank in [-1, 0] else logging.WARN,
         # format='[{%(filename)s:%(lineno)d} %(levelname)s - %(message)s',
         handlers=[
             logging.FileHandler(filename=f'{logdir}/train_{args.local_rank}.log'),
@@ -432,7 +432,7 @@ def train():
     if args.fp16:
         from apex import amp  # Apex is only required if we use fp16 training
 
-        model, optimizer = amp.initialize(model, optimizer, opt_level=args.fp16, keep_batchnorm_fp32=True)
+        model, optimizer = amp.initialize(model, optimizer, opt_level=args.fp16)
     if args.distributed:
         model = DistributedDataParallel(
             model, device_ids=[args.local_rank], output_device=args.local_rank
@@ -489,9 +489,9 @@ def train():
                 logger.info("inputs : %s", input_text)
                 logger.info("outputs: %s", output_text)
             return dict(
-                lm_logits_flat_shifted=lm_logits_flat_shifted, 
+                lm_logits_flat_shifted=lm_logits_flat_shifted,
                 mc_logits=mc_logits,
-                lm_labels_flat_shifted=lm_labels_flat_shifted, 
+                lm_labels_flat_shifted=lm_labels_flat_shifted,
                 mc_labels=mc_labels,
                 lr=torch.Tensor([optimizer.get_lr()[0]])
                 )
@@ -569,7 +569,7 @@ def train():
     # On the main process: add progress bar, tensorboard, checkpoints and save model, configuration and tokenizer before we start to train
     if args.local_rank in [-1, 0]:
         pbar = ProgressBar(persist=True)
-        pbar.attach(trainer, metric_names=["loss"])
+        pbar.attach(trainer, metric_names=["loss","lr"])
         evaluator.add_event_handler(
             Events.COMPLETED,
             lambda _: logger.info(
