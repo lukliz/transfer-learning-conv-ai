@@ -958,3 +958,12 @@ Trained a roaste2 bot, and techsupport bot+compliments.
     https://www.reddit.com/r/techsupport/comments/33evdi/suggested_reading_official_malware_removal_guide/
 
 
+# Starting multiple bots
+python interact_server.py  --max_history 20 --top_p 0.8 --model_checkpoint runs/20190723_02-52-01_gpt2_toastme_techsupport --fp16 O3 --port 5560
+python irc_bot.py --port 5560 --personality toastme
+python irc_bot.py --port 5560 --personality techsupport
+
+python interact_server.py  --max_history 20 --top_p 0.8 --model_checkpoint runs/Jul19_14-38-58_ip-172-31-39-133_gpt2-medium_goood --port 5587 --fp16 O3
+python irc_bot.py --port 5587 --personality RoastMe
+python irc_bot.py --port 5587 --personality totallynotrobots
+python irc_bot.py --port 5587 --personality dreams

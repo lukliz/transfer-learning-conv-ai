@@ -35,7 +35,15 @@ parser.add_argument(
         default=5586,
         help="zeromq port",
     )
+parser.add_argument(
+        "--personality",
+        type=str,
+        default="RoastMe",
+        help="bot personality",
+    )
 args = parser.parse_args()
+
+
 secrets = json.load(open(".secrets.json"))
 slack_token = secrets["slack"]["Bot User OAuth Access Token"]
 
@@ -53,7 +61,7 @@ def say_hello(**payload):
     if 'text' in data and 'user' in data and not 'subtype' in data:
         body = data['text']
         name = data['user']
-        msg = model_api.roast(body, name, personality='RoastMe')
+        msg = model_api.roast(body, name, personality=args.personality)
         web_client.chat_postMessage(
             channel=channel_id,
             text=msg,
@@ -62,9 +70,6 @@ def say_hello(**payload):
         logger.info("Out msg %s", dict(channel=channel_id,
             text=msg,
             thread_ts=thread_ts))
-        # 'subtype': 'bot_message', 
-        # 'subtype': 'message_replied'
-        # 'subtype': 'channel_purpose'
 
 # Initial message wit hwebclient
 client = slack.WebClient(token=slack_token)

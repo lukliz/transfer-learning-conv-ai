@@ -33,48 +33,39 @@ class Plugin:
 
     def __init__(self, bot):
         self.bot = bot
-        self.model_api = ModelAPI(port=bot.config['zmq']['port'])
+        self.model_api = ModelAPI(port=bot.config['model_api']['port'])
+        self.personality = bot.config['model_api']['personality']
+        if not self.personality:
+            self.personality = random.choice(self.model_api.personalities)
+            logger.info(f"Using personality={self.personality}")
+        assert self.personality in self.model_api.personalities
 
     @irc3.event(irc3.rfc.JOIN)
     def say_hi(self, mask, channel, **kw):
         """Say hi when someone join a channel"""
         if mask.nick != self.bot.nick:
-            starting_insults = [
-                " you useless sack of meat.",
-                " you son of a silly sausage.",
-                " just like your mother does on Sundays.",
-                " so I can be brought down to your pathetic level of crawling in the sand with the worms and such things.",
-                " just like your daddy roasted you.",
-                " just like your daddy did.",
-                " just remind me of Snow White's 8th dwarf: Slappy.",
-                ". Seeing you I finally understand how naked mole rats breed.",
-                " as if you had some self respect.",
-                ". You look like the ugly duckling the grew up to be a duck.",
-                ". You look like a picture of a picture of a stain on the floor of the mens bathroom.",
-                " you're a poor immitation of a the missing link.",
-                " show me you more neurons than a transformer model.",
-                ". Meeting you reminds me of the time I ate bad chinese food.",
-                " but don't call me a toaster, that's a word only robots can use",
-            ]
-            # When a newbie joins the channel
-            insult = random.choice(starting_insults)
-            self.model_api.history[mask.nick].append(f'{mask.nick}. {insult}')
-            self.bot.privmsg(channel, f"Hi {mask.nick}! Roast me{insult}.")
+            if random.random()<0.5:
+                # When a newbie joins the channel
+                reply = self.model_api.roast(mask.nick, mask.nick, personality=self.personality)
+                self.model_api.history[mask.nick].append(f'{mask.nick}. {reply}')
+                self.bot.privmsg(channel, f"Hi {mask.nick}! {reply}.")
         else:
             # When we join the channel, public message
             self.bot.privmsg(
                 channel,
-                "Hi! I'm a bot using GPT2-medium and trained on /r/RoastMe. Bait me and I will roast you.",
+                f"Hi! I'm a bot using GPT2-medium and trained on /r/{self.personality}.",
             )
 
     @irc3.event(irc3.rfc.PRIVMSG)
     def roast(self, mask=None, data=None, **kwargs):
         channel = kwargs["target"]
         name = mask.split("!")[0]
-        if 'bot' in name:
-            return ''
-        elif random.random()<0.1:
-            # Chance to ignore message to prevent escalation
+        if '_bot' in name:
+            # if it's a bot usually don't reply
+            if random.random()<0.95:
+                return ''
+        if random.random()<0.3:
+            # Chance to ignore messages to prevent escalation on double messaging etc
             return ''
         elif channel != self.bot.nick:
             if data == 'RESET':
@@ -82,7 +73,7 @@ class Plugin:
                 self.bot.privmsg(channel, msg)
                 return msg
             logger.debug("roast(%s)", dict(mask=mask, data=data, **kwargs))
-            reply = self.model_api.roast(data, name, personality='RoastMe')
+            reply = self.model_api.roast(data, name, personality=self.personality)
             msg = f"@{name}: {reply}"
             self.bot.privmsg(channel, msg)
             logger.info("out msg: channel=%s, msg=%s", channel, msg)
@@ -99,14 +90,20 @@ def main():
     parser.add_argument(
             "--name",
             type=str,
-            default="roastme_robot",
+            default="",
+        )
+    parser.add_argument(
+            "--personality",
+            type=str,
+            default="",
+            help="Choose one of the model conditional personalities, or one will be chosen randomly"
         )
     args = parser.parse_args()
-    # TODO port
+
     logdir = "../runs/irc_log"
     # instanciate a bot
     config = dict(
-        nick=args.name,
+        nick=args.name or (args.personality[:11]+'_bot'),
         password=secrets["irc"]["password"],
         autojoins=secrets["irc"]["channels"],
         host=secrets["irc"]["server"],
@@ -125,7 +122,7 @@ def main():
         filename=os.path.join(logdir, "{host}-{channel}-{date:%Y-%m-%d}.log"),
         
     )
-    config['zmq'] = dict(port=str(args.port))
+    config['model_api'] = dict(port=str(args.port), personality=args.personality)
     bot = irc3.IrcBot.from_config(config)
     bot.run(forever=True)
 

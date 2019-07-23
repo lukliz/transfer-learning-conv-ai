@@ -294,6 +294,7 @@ def run():
     socket_out.bind("tcp://127.0.0.1:%s" % (args.port+1))
 
     time.sleep(1)
+    logger.info(f"zmq started you can now start clients on port {args.port}")
     server_config = dict(args=args.__dict__, training_args=training_args.__dict__) 
     # socket_out.send_string(mogrify("serverconfig", server_config))
 
