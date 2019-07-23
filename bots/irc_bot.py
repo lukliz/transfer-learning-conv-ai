@@ -58,26 +58,33 @@ class Plugin:
 
     @irc3.event(irc3.rfc.PRIVMSG)
     def roast(self, mask=None, data=None, **kwargs):
-        channel = kwargs["target"]
+        """Response to a channel message."""
         name = mask.split("!")[0]
+        name_blacklist = ['nickserv', 'freenode', 'chanserv']
+        for bad_name in name_blacklist:
+            if bad_name in name.lower():
+                return ''
+        
+        is_pm = kwargs["target"] == self.bot.nick
+        channel = name if is_pm else kwargs["target"]
         if '_bot' in name:
             # if it's a bot usually don't reply
             if random.random()<0.95:
                 return ''
-        if random.random()<0.3:
-            # Chance to ignore messages to prevent escalation on double messaging etc
+        
+        if (not is_pm) and random.random()<0.3:
+            # Chance to ignore messages to prevent escalation on double messaging in public channels etc
             return ''
-        elif channel != self.bot.nick:
-            if data == 'RESET':
-                msg = self.model_api.reset(name)
-                self.bot.privmsg(channel, msg)
-                return msg
-            logger.debug("roast(%s)", dict(mask=mask, data=data, **kwargs))
-            reply = self.model_api.roast(data, name, personality=self.personality)
-            msg = f"@{name}: {reply}"
+        
+        if data == 'RESET':
+            msg = self.model_api.reset(name)
             self.bot.privmsg(channel, msg)
-            logger.info("out msg: channel=%s, msg=%s", channel, msg)
             return msg
+        logger.debug("roast(%s)", dict(mask=mask, data=data, **kwargs))
+        reply = self.model_api.roast(data, name, personality=self.personality)
+        msg = reply if is_pm else f"@{name}: {reply}"
+        self.bot.privmsg(channel, msg)
+        logger.info("out msg: channel=%s, msg=%s", channel, msg)
 
 def main():
     parser = ArgumentParser()
