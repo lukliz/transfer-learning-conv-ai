@@ -36,7 +36,7 @@ while True:
     if raw_text == "RESET":
         out_text = model_api.reset(name)
         print("-" * 80)
-        personality = random.choice(personalities)
+        personality = random.choice(model_api.personalities)
         logger.info(
             "Selected personality: /r/%s", tokenizer.decode(chain(*personality))
         )

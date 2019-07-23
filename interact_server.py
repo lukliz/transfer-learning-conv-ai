@@ -43,6 +43,7 @@ class ModelAPI(object):
         self.server_config = self.socket.recv_json()
         logger.info("Connected to server, received initial message: %s", self.server_config)
         self.history = collections.defaultdict(list)
+        self.personalities = self.server_config["training_args"]["subreddit"]
 
     def reset(self, name):
         self.history[name] = []
