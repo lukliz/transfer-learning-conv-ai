@@ -3,6 +3,7 @@ import coloredlogs
 import os
 import logging
 import crayons
+from argparse import ArgumentParser
 
 os.sys.path.append('..')
 from interact_server import ModelAPI
@@ -12,7 +13,15 @@ logger = logging.getLogger(__file__)
 coloredlogs.install(level=logging.DEBUG)
 logging.getLogger("zmqtest").setLevel(logging.DEBUG)
 
-model_api = ModelAPI(port="5586")
+parser = ArgumentParser()
+parser.add_argument(
+        "--port",
+        type=int,
+        default=5586,
+        help="zeromq port",
+    )
+args = parser.parse_args()
+model_api = ModelAPI(port=str(args.port))
 
 name = "human"
 

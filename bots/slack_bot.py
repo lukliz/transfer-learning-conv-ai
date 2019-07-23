@@ -6,6 +6,7 @@ import json
 import logging
 import datetime
 import sys
+from argparse import ArgumentParser
 os.sys.path.append('..')
 from interact_server import ModelAPI
 
@@ -25,14 +26,21 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__file__)
 coloredlogs.install(level=logging.DEBUG)
-
 logging.getLogger("zmqtest").setLevel(logging.DEBUG)
 
+parser = ArgumentParser()
+parser.add_argument(
+        "--port",
+        type=int,
+        default=5586,
+        help="zeromq port",
+    )
+args = parser.parse_args()
 secrets = json.load(open(".secrets.json"))
 slack_token = secrets["slack"]["Bot User OAuth Access Token"]
 
 
-model_api = ModelAPI()
+model_api = ModelAPI(port=str(args.port))
 # TODO channel whitelist, only roast people who invite it or speak in a thread
 @slack.RTMClient.run_on(event='message')
 def say_hello(**payload):

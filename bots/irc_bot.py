@@ -10,7 +10,7 @@ import os
 import random
 import sys
 import time
-
+from argparse import ArgumentParser
 import coloredlogs
 import irc3
 import zmq
@@ -35,8 +35,7 @@ class Plugin:
 
     def __init__(self, bot):
         self.bot = bot
-        port = secrets["zeromq"]["port"]
-        self.model_api = ModelAPI(port=port)
+        self.model_api = ModelAPI(port=bot.config['zmq']['port'])
 
     @irc3.event(irc3.rfc.JOIN)
     def say_hi(self, mask, channel, **kw):
@@ -87,6 +86,15 @@ class Plugin:
             return msg
 
 def main():
+    parser = ArgumentParser()
+    parser.add_argument(
+            "--port",
+            type=int,
+            default=5586,
+            help="zeromq port",
+        )
+    args = parser.parse_args()
+    # TODO port
     logdir = "../runs/irc_log"
     # instanciate a bot
     config = dict(
@@ -107,7 +115,9 @@ def main():
     config["irc3.plugins.logger"] = dict(
         handler="irc3.plugins.logger.file_handler",
         filename=os.path.join(logdir, "{host}-{channel}-{date:%Y-%m-%d}.log"),
+        
     )
+    config['zmq'] = dict(port=str(args.port))
     bot = irc3.IrcBot.from_config(config)
     bot.run(forever=True)
 
