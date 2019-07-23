@@ -18,6 +18,7 @@ import zmq
 import coloredlogs
 import crayons
 import torch
+import json
 import torch.nn.functional as F
 import collections
 
@@ -26,23 +27,52 @@ from pytorch_pretrained_bert import (GPT2LMHeadModel, GPT2Tokenizer,
                                      OpenAIGPTLMHeadModel, OpenAIGPTTokenizer)
 from train import SPECIAL_TOKENS, build_input_from_segments
 
-logging.getLogger('zmqtest').setLevel(logging.DEBUG)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__file__)
-coloredlogs.install()
+coloredlogs.install(logging.DEBUG)
+logging.getLogger('zmqtest').setLevel(logging.DEBUG)
 
+TOPICS = [str(i) for i in range(1, 1000)]
+
+def mogrify(topic, msg):
+    """ json encode the message and prepend the topic """
+    logger.debug(f"mogrify: topic={topic} msg={msg}")
+    return topic + ' ' + json.dumps(msg)
+
+def demogrify(topicmsg):
+    """ Inverse of mogrify() """
+    json0 = topicmsg.find('{')
+    topic = topicmsg[0:json0].strip()
+    msg = json.loads(topicmsg[json0:])
+    logger.debug(f"demogrify: topic={topic} msg={msg}")
+    return topic, msg 
+    
 class ModelAPI(object):
     """Client api obj."""
-    def __init__(self, port="5586"):
+    def __init__(self, port=5586):
+        port = int(port)
         # Zeromq to pytorch server        
-        logger.info(f"Joining Zeromq server in {port}")
         context = zmq.Context()
-        self.socket = context.socket(zmq.PAIR)
-        self.socket.connect("tcp://localhost:%s" % port)
+        self.topic = random.choice(TOPICS)
+        self.socket_out = context.socket(zmq.PUB)
+        self.socket_out.connect("tcp://localhost:%s" % port)
+        logging.info(f"zmq PUB to {port}")
+
+        self.socket_in = context.socket(zmq.SUB)
+        self.socket_in.connect("tcp://localhost:%s" % (port+1))
+        self.socket_in.setsockopt_string(zmq.SUBSCRIBE, self.topic)
+        self.socket_in.setsockopt_string(zmq.SUBSCRIBE, 'serverconfig')
+        logging.info(f"zmq SUB to {port+1}, topic={self.topic}")
+
+        logger.info("Asking and waiting for initial server config")
         time.sleep(1)
-        self.server_config = self.socket.recv_json()
+        self.socket_out.send_string(mogrify('serverconfig', {}))        
+        topic, msg = demogrify(self.socket_in.recv_string())
+        assert topic=='serverconfig'
+        self.server_config = msg
         logger.info("Connected to server, received initial message: %s", self.server_config)
+
         self.history = collections.defaultdict(list)
         self.personalities = self.server_config["training_args"]["subreddit"]
 
@@ -58,11 +88,27 @@ class ModelAPI(object):
             personality = random.choice(self.server_config["training_args"]["subreddit"])
         payload = dict(personality=personality, history=self.history[name])
         logger.debug("payload %s", payload)
-        self.socket.send_json(payload)
 
-        reply = self.socket.recv_json()["data"]
-        # TODO only append if it's not too similar to previous replies, avoid looping
-        self.history[name].append(reply)
+        self.socket_out.send_string(mogrify(self.topic, payload))        
+        topic = None
+        while topic != self.topic:
+            topic, msg = demogrify(self.socket_in.recv_string())
+            
+        reply = msg["data"]
+    
+        # To avoid looping 25% change of putting another reply in. 5% chance of forgetting all
+        if random.random()<25:
+            random_replies = ['I love to eat toast', 'I am a kung fu master',
+             'You look like a rugby player', 'Good will to all creatures', 'Hi friend, I love you and love all', 
+             'Fuck you and the horse you rode in on']
+            fake_reply = random.choice(random_replies)
+            self.history[name].append(fake_reply)
+        elif random.random()<5:
+            self.history[name] = []   
+        elif random.random()<25:
+            pass
+        else: 
+            self.history[name].append(reply)
 
         # Keep history at managable length
         self.history[name] = self.history[name][-10:]
@@ -226,9 +272,30 @@ def run():
     )
     args = parser.parse_args()
 
+    model_training_args = Path(args.model_checkpoint).joinpath(
+        "model_training_args.bin"
+    )
+    training_args = torch.load(model_training_args.open("rb"))
+
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__file__)
     logger.info(pformat(args))
+
+    context = zmq.Context()
+    logger.info(f"bind ZMQ SUB on port {args.port}")
+    socket_in = context.socket(zmq.SUB)
+    socket_in.bind("tcp://127.0.0.1:%s" % args.port)
+    socket_in.setsockopt_string(zmq.SUBSCRIBE, 'serverconfig')
+    for topic in TOPICS:
+        socket_in.setsockopt_string(zmq.SUBSCRIBE, topic)
+
+    logger.info(f"bind ZMQ PUB on port {args.port+1}")
+    socket_out = context.socket(zmq.PUB)
+    socket_out.bind("tcp://127.0.0.1:%s" % (args.port+1))
+
+    time.sleep(1)
+    server_config = dict(args=args.__dict__, training_args=training_args.__dict__) 
+    # socket_out.send_string(mogrify("serverconfig", server_config))
 
     if args.model_checkpoint == "":
         args.model_checkpoint = download_targz_to_folder(MJC_FINETUNED_MODEL)
@@ -252,10 +319,6 @@ def run():
         model = amp.initialize(model, opt_level=args.fp16)
 
     logger.info("Sample a personality")
-    model_training_args = Path(args.model_checkpoint).joinpath(
-        "model_training_args.bin"
-    )
-    training_args = torch.load(model_training_args.open("rb"))
     personalities_str = getattr(training_args, "subreddit", [])
     personalities = [
         [tokenizer.convert_tokens_to_ids(tokenizer.tokenize(obj))]
@@ -268,35 +331,44 @@ def run():
     personality = random.choice(personalities)
     print("training personalities", [tokenizer.decode(chain(*p)) for p in personalities])
 
+    
+    # context = zmq.Context()
+    # logger.info(f"bind ZMQ SUB on port {args.port}")
+    # socket_in = context.socket(zmq.SUB)
+    # socket_in.bind("tcp://127.0.0.1:%s" % args.port)
+    # socket_in.setsockopt(zmq.SUBSCRIBE, '0')
+    # for topic in TOPICS:
+    #     socket_in.setsockopt(zmq.SUBSCRIBE, topic)
 
-    port = str(args.port)
-    context = zmq.Context()
-    socket = context.socket(zmq.PAIR)
-    logger.info(f"bind ZMQ server on port {port}")
-    socket.bind("tcp://127.0.0.1:%s" % port)
-    socket.setsockopt(zmq.LINGER, 0) # timeout
-    time.sleep(1)
-    server_config = dict(args=args.__dict__, training_args=training_args.__dict__)
-    socket.send_json(server_config)
+    # logger.info(f"bind ZMQ PUB on port {args.port+1}")
+    # socket_out = context.socket(zmq.PUB)
+    # socket_out.bind("tcp://127.0.0.1:%s" % (args.port+1))
+
+    # time.sleep(1)
+    # server_config = dict(args=args.__dict__, training_args=training_args.__dict__) 
+    # socket_out.send_string(mogrify("serverconfig", server_config))   
 
     def encode(s):
         return tokenizer.encode(s)[:1024]
 
     while True:
         logger.info('ZMQ waiting to receive')
-        msg = socket.recv_json()
-        try:
-            logger.info('msg %s', msg)
-            with torch.no_grad():
-                personality = [encode(msg['personality'])]
-                history = [encode(h) for h in msg['history']]
-                out_ids = sample_sequence(personality, history, tokenizer, model, args)
-                out_text = tokenizer.decode(out_ids, skip_special_tokens=True)
-            socket.send_json(dict(data=out_text))
-            time.sleep(1)
-        except Exception as e:
-            logger.warn("Error while processing message: %s", e)
-            socket.send_json(dict(data="ERROR: Emotion.exe has stopped responding."))
+        topic, msg = demogrify(socket_in.recv_string())
+        if topic == 'serverconfig':
+            socket_out.send_string(mogrify("serverconfig", server_config))
+        else:  
+            try:
+                logger.debug('msg received %s', msg)
+                with torch.no_grad():
+                    personality = [encode(msg['personality'])]
+                    history = [encode(h) for h in msg['history']]
+                    out_ids = sample_sequence(personality, history, tokenizer, model, args)
+                    out_text = tokenizer.decode(out_ids, skip_special_tokens=True)
+                socket_out.send_string(mogrify(topic, dict(data=out_text)))
+                time.sleep(1)
+            except Exception as e:
+                logger.warn("Error while processing message: %s", e)
+                socket_out.send_string(mogrify(topic, dict(data=f"ERROR TOO MUCH ROAST: {e}")))
 
 
 if __name__ == "__main__":

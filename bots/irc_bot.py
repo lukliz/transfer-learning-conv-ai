@@ -11,27 +11,18 @@ import random
 import sys
 import time
 from argparse import ArgumentParser
-import coloredlogs
 import irc3
 import zmq
 from irc3.plugins.command import command
 
 os.sys.path.append('..')
-from interact_server import ModelAPI
+from interact_server import ModelAPI, TOPICS
+import logging
+from helpers import setup_logging
+setup_logging('irc_bot', level=logging.DEBUG)
 
-logging.basicConfig(
-    level=logging.INFO, 
-    format='[{%(filename)s:%(lineno)d} %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler(filename=f'../logs/irc_bot_{ts}.log'),
-        logging.StreamHandler(sys.stdout)
-    ]
-)
 logger = logging.getLogger(__file__)
-coloredlogs.install(level=logging.DEBUG)
-
 logging.getLogger("zmqtest").setLevel(logging.DEBUG)
-
 secrets = json.load(open(".secrets.json"))
 
 
@@ -80,7 +71,12 @@ class Plugin:
     def roast(self, mask=None, data=None, **kwargs):
         channel = kwargs["target"]
         name = mask.split("!")[0]
-        if channel != self.bot.nick:
+        if 'bot' in name:
+            return ''
+        elif random.random()<0.1:
+            # Chance to ignore message to prevent escalation
+            return ''
+        elif channel != self.bot.nick:
             if data == 'RESET':
                 msg = self.model_api.reset(name)
                 self.bot.privmsg(channel, msg)
@@ -100,12 +96,17 @@ def main():
             default=5586,
             help="zeromq port",
         )
+    parser.add_argument(
+            "--name",
+            type=str,
+            default="roastme_robot",
+        )
     args = parser.parse_args()
     # TODO port
     logdir = "../runs/irc_log"
     # instanciate a bot
     config = dict(
-        nick=secrets["irc"]["nick"],
+        nick=args.name,
         password=secrets["irc"]["password"],
         autojoins=secrets["irc"]["channels"],
         host=secrets["irc"]["server"],
