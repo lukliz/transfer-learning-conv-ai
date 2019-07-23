@@ -2,13 +2,11 @@ import os
 import random
 import slack
 import coloredlogs
-import time
 import json
-import zmq
-import collections
 import logging
 import datetime
 import sys
+os.sys.path.append('..')
 from interact_server import ModelAPI
 
 # For api token https://github.com/slackapi/python-slackclient/blob/master/tutorial/01-creating-the-slack-app.md

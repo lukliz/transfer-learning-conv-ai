@@ -44,9 +44,9 @@ class ModelAPI(object):
         logger.info("Connected to server, received initial message: %s", server_config)
         self.history = collections.defaultdict(list)
 
-    def reset(name):
+    def reset(self, name):
         self.history[name] = []
-        return f'<reset memmory of {name}>'
+        return f'<reset memory of {name}>'
 
     def gen_roast(self, reply, name):
         # return '$ROAST'

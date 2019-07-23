@@ -80,7 +80,7 @@ class Plugin:
                 self.bot.privmsg(channel, msg)
                 return msg
             logger.debug("roast(%s)", dict(mask=mask, data=data, **kwargs))
-            reply = self.model_api.roast(data, name)
+            reply = self.model_api.gen_roast(data, name)
             msg = f"@{name}: {reply}"
             self.bot.privmsg(channel, msg)
             logger.info("out msg: channel=%s, msg=%s", channel, msg)

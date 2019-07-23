@@ -1,7 +1,9 @@
 import random
 import coloredlogs
-import json
+import os
 import logging
+
+os.sys.path.append('..')
 from interact_server import ModelAPI
 
 logging.basicConfig()
