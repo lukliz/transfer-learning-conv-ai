@@ -18,6 +18,7 @@ import coloredlogs
 import crayons
 import torch
 import torch.nn.functional as F
+import collections
 
 from data import MJC_FINETUNED_MODEL, download_targz_to_folder
 from pytorch_pretrained_bert import (GPT2LMHeadModel, GPT2Tokenizer,
@@ -29,6 +30,38 @@ logging.getLogger('zmqtest').setLevel(logging.DEBUG)
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__file__)
 coloredlogs.install()
+
+class ModelAPI(object):
+    """Client api obj."""
+    def __init__(self, port="5586"):
+        # Zeromq to pytorch server        
+        logger.info(f"Joining Zeromq server in {port}")
+        context = zmq.Context()
+        self.socket = context.socket(zmq.PAIR)
+        self.socket.connect("tcp://localhost:%s" % port)
+        time.sleep(1)
+        server_config = self.socket.recv_json()
+        logger.info("Connected to server, received initial message: %s", server_config)
+        self.history = collections.defaultdict(list)
+
+    def reset(name):
+        self.history[name] = []
+        return f'<reset memmory of {name}>'
+
+    def gen_roast(self, reply, name):
+        # return '$ROAST'
+        self.history[name].append(reply)
+        personality = random.choice(['RoastMe', 'totallynotrobots', 'dreams'])
+        payload = dict(personality=personality, history=self.history[name])
+        logger.debug("payload %s", payload)
+        self.socket.send_json(payload)
+
+        reply = self.socket.recv_json()["data"]
+        self.history[name].append(reply)
+
+        # Keep history at managable length
+        self.history[name] = self.history[name][-10:]
+        return reply
 
 
 def top_filtering(
@@ -84,7 +117,7 @@ def sample_sequence(personality, history, tokenizer, model, args, current_output
     for i in range(args.max_length):
         authors =  [str(i%2) for i in range(len(history))]
         instance, sequence = build_input_from_segments(
-            personality, history, current_output, authors, tokenizer, with_eos=False
+            personality, history, current_output, authors, tokenizer, with_eos=False, max_len=1024
         )
 
         input_ids = torch.tensor(instance["input_ids"], device=args.device).unsqueeze(0)
@@ -241,9 +274,8 @@ def run():
     server_config = dict(args=args.__dict__, training_args=training_args.__dict__)
     socket.send_json(server_config)
 
-    # TODO send setup config on specific message
     def encode(s):
-        return tokenizer.encode(s)[:tokenizer.max_length]
+        return tokenizer.encode(s)[:1024]
 
     while True:
         logger.info('ZMQ waiting to receive')

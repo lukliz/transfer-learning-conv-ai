@@ -9,6 +9,7 @@ import collections
 import logging
 import datetime
 import sys
+from interact_server import ModelAPI
 
 # For api token https://github.com/slackapi/python-slackclient/blob/master/tutorial/01-creating-the-slack-app.md
 # need rights channels:read channels:history incoming-webhook  chat:write:bot 
@@ -31,33 +32,6 @@ logging.getLogger("zmqtest").setLevel(logging.DEBUG)
 
 secrets = json.load(open(".secrets.json"))
 slack_token = secrets["slack"]["Bot User OAuth Access Token"]
-
-
-class ModelAPI(object):
-    def __init__(self):
-
-        # Zeromq to pytorch server
-        port = "5586"
-        logger.info(f"Joining Zeromq server in {port}")
-        context = zmq.Context()
-        self.socket = context.socket(zmq.PAIR)
-        self.socket.connect("tcp://localhost:%s" % port)
-        time.sleep(1)
-        server_config = self.socket.recv_json()
-        logger.info("Connected to server, received initial message: %s", server_config)
-        self.history = collections.defaultdict(list)
-
-    def gen_roast(self, reply, name):
-        # return '$ROAST'
-        self.history[name].append(reply)
-        personality = random.choice(['RoastMe', 'totallynotrobots', 'dreams'])
-        payload = dict(personality=personality, history=self.history[name])
-        logger.debug("payload %s", payload)
-        self.socket.send_json(payload)
-
-        reply = self.socket.recv_json()["data"]
-        self.history[name].append(reply)
-        return reply
 
 
 model_api = ModelAPI()

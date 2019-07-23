@@ -16,6 +16,9 @@ import irc3
 import zmq
 from irc3.plugins.command import command
 
+os.sys.path.append('..')
+from interact_server import ModelAPI
+
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__file__)
 coloredlogs.install(level=logging.DEBUG)
@@ -32,20 +35,8 @@ class Plugin:
 
     def __init__(self, bot):
         self.bot = bot
-
-        # Zeromq to pytorch server
         port = secrets["zeromq"]["port"]
-        logger.info(f"Joining Zeromq server in {port}")
-        self.context = zmq.Context()
-        self.socket = self.context.socket(zmq.PAIR)
-        self.socket.connect("tcp://localhost:%s" % port)
-        time.sleep(1)
-        self.server_config = self.socket.recv_json()
-        logger.info(
-            "Connected to server, received initial message: %s", self.server_config
-        )
-
-        self.history = collections.defaultdict(list)
+        self.model_api = ModelAPI(port=port)
 
     @irc3.event(irc3.rfc.JOIN)
     def say_hi(self, mask, channel, **kw):
@@ -84,18 +75,16 @@ class Plugin:
         channel = kwargs["target"]
         name = mask.split("!")[0]
         if channel != self.bot.nick:
-            self.history[name].append(data)
+            if data == 'RESET':
+                msg = self.model_api.reset(name)
+                self.bot.privmsg(channel, msg)
+                return msg
             logger.debug("roast(%s)", dict(mask=mask, data=data, **kwargs))
-            payload = dict(personality="RoastMe", history=self.history[name])
-            logger.debug("payload %s", payload)
-            self.socket.send_json(payload)
-            reply = self.socket.recv_json()["data"]
-            self.history[name].append(reply)
+            reply = self.model_api.roast(data, name)
             msg = f"@{name}: {reply}"
             self.bot.privmsg(channel, msg)
             logger.info("out msg: channel=%s, msg=%s", channel, msg)
             return msg
-
 
 def main():
     logdir = "../runs/irc_log"
