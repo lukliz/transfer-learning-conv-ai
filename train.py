@@ -432,7 +432,7 @@ def train():
     if args.fp16:
         from apex import amp  # Apex is only required if we use fp16 training
 
-        model, optimizer = amp.initialize(model, optimizer, opt_level=args.fp16, keep_batchnorm_fp32=True)
+        model, optimizer = amp.initialize(model, optimizer, opt_level=args.fp16)
     if args.distributed:
         model = DistributedDataParallel(
             model, device_ids=[args.local_rank], output_device=args.local_rank
