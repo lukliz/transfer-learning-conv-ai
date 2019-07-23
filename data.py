@@ -23,8 +23,6 @@ logger = logging.getLogger(__file__)
 PERSONACHAT_URL = "http://publicmldatasets.thinkcds.com/transfer-learning-conv-ai/20190715_reddit_threads_pickle.tar.gz"
 MJC_FINETUNED_MODEL = "http://publicmldatasets.thinkcds.com/transfer-learning-conv-ai/Jul13_18-24-35_mjcdesktop.tar.gz"
 
-logger = logging.getLogger(__file__)
-
 
 def download_targz_to_folder(url):
     """ Download and extract finetuned model from S3 """
@@ -108,7 +106,7 @@ def collect_thread_files(data_dir, subreddits):
         if len(subreddit_files) > 10:
             subreddit = subreddit_path.name
             if (subreddits == []) or (subreddit in subreddits):
-                print(f"{len(subreddit_files):10d} threads from /r/{subreddit}")
+                logger.info(f"{len(subreddit_files):10d} threads from /r/{subreddit}")
 
                 # split
                 train_files, test_files = train_test_split(
@@ -122,7 +120,7 @@ def collect_thread_files(data_dir, subreddits):
                 splits["valid"][subreddit] = valid_files
                 splits["test"][subreddit] = test_files
             else:
-                print(f"subreddit not in filter /r/{subreddit}")
+                logger.info(f"subreddit not in filter /r/{subreddit} (with {len(subreddit_files):10d})")
 
     num_train_examples = len(list(itertools.chain(*list(splits["train"].values()))))
     if len(splits["train"]) == 0 or num_train_examples < 10:
@@ -162,7 +160,7 @@ def cache_load_utturances(ttl=360000):
                 value = func(**kwargs)
                 simple_cache.save_key(filename, key, value, ttl)
             else:
-                print(f'Loaded utturances from cache for {kwargs["personality"]}')
+                logger.info(f'Loaded utturances from cache for {kwargs["personality"]}')
             return value
 
         return wrapper
@@ -346,7 +344,7 @@ def get_dataset(tokenizer, data_path, subreddits=[], max_seq_len=None):
     if data_path == "":
         data_path = download_targz_to_folder(PERSONACHAT_URL) + "/reddit_threads"
     data_dir = Path(data_path)
-    print('data_dir', data_dir)
+    logger.info('data_dir %s', data_dir)
 
     splits = collect_thread_files(data_dir, subreddits)
 
