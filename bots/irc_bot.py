@@ -60,7 +60,7 @@ class Plugin:
             ]
             # When a newbie joins the channel
             insult = random.choice(starting_insults)
-            self.history[mask.nick].append(f'{mask.nick}. {insult}')
+            self.model_api.history[mask.nick].append(f'{mask.nick}. {insult}')
             self.bot.privmsg(channel, f"Hi {mask.nick}! Roast me{insult}.")
         else:
             # When we join the channel, public message
@@ -79,7 +79,7 @@ class Plugin:
                 self.bot.privmsg(channel, msg)
                 return msg
             logger.debug("roast(%s)", dict(mask=mask, data=data, **kwargs))
-            reply = self.model_api.roast(data, name)
+            reply = self.model_api.roast(data, name, personality='RoastMe')
             msg = f"@{name}: {reply}"
             self.bot.privmsg(channel, msg)
             logger.info("out msg: channel=%s, msg=%s", channel, msg)

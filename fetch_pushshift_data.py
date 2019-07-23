@@ -8,6 +8,7 @@ import itertools
 import pickle
 import logging
 import os
+import coloredlogs
 import random
 from pathlib import Path
 
@@ -70,9 +71,9 @@ parser.add_argument(
 args = parser.parse_args()
 print(args)
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig()
 logger = logging.getLogger(__file__)
-logger.setLevel(logging.DEBUG)
+coloredlogs.install(level=logging.INFO)
 
 
 data_dir = Path(args.out_path)

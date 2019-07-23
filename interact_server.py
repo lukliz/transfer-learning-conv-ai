@@ -12,6 +12,7 @@ from itertools import chain
 from pathlib import Path
 from pprint import pformat
 import time
+from fuzzywuzzy import fuzz
 
 import zmq
 import coloredlogs
@@ -60,6 +61,7 @@ class ModelAPI(object):
         self.socket.send_json(payload)
 
         reply = self.socket.recv_json()["data"]
+        # TODO only append if it's not too similar to previous replies, avoid looping
         self.history[name].append(reply)
 
         # Keep history at managable length
