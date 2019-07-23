@@ -24,14 +24,14 @@ args = parser.parse_args()
 model_api = ModelAPI(port=str(args.port))
 
 name = "human"
-
+personality = random.choice(model_api.personalities)
 while True:
     raw_text = input(f"{crayons.green('>>> ')}")
     while not raw_text:
         print(f"{crayons.red('Prompt should not be empty!')}")
         raw_text = input(f"{crayons.green('>>> ')}")
 
-    out_text = model_api.roast(raw_text, name)
+    out_text = model_api.roast(raw_text, name, personality=personality)
 
     if raw_text == "RESET":
         out_text = model_api.reset(name)
