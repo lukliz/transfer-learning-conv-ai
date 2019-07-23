@@ -2,6 +2,7 @@ import random
 import coloredlogs
 import os
 import logging
+import crayons
 
 os.sys.path.append('..')
 from interact_server import ModelAPI
