@@ -15,11 +15,12 @@ import irc3
 import zmq
 from irc3.plugins.command import command
 
-os.sys.path.append('..')
+os.sys.path.append("..")
 from interact_server import ModelAPI, TOPICS
 import logging
 from helpers import setup_logging
-setup_logging('irc_bot', level=logging.DEBUG)
+
+setup_logging("irc_bot", level=logging.DEBUG)
 
 logger = logging.getLogger(__file__)
 logging.getLogger("zmqtest").setLevel(logging.DEBUG)
@@ -33,8 +34,8 @@ class Plugin:
 
     def __init__(self, bot):
         self.bot = bot
-        self.model_api = ModelAPI(port=bot.config['model_api']['port'])
-        self.personality = bot.config['model_api']['personality']
+        self.model_api = ModelAPI(port=bot.config["model_api"]["port"])
+        self.personality = bot.config["model_api"]["personality"]
         if not self.personality:
             self.personality = random.choice(self.model_api.personalities)
             logger.info(f"Using personality={self.personality}")
@@ -44,10 +45,12 @@ class Plugin:
     def say_hi(self, mask, channel, **kw):
         """Say hi when someone join a channel"""
         if mask.nick != self.bot.nick:
-            if random.random()<0.5:
+            if random.random() < 0.85:
                 # When a newbie joins the channel
-                reply = self.model_api.roast(mask.nick, mask.nick, personality=self.personality)
-                self.model_api.history[mask.nick].append(f'{mask.nick}. {reply}')
+                reply = self.model_api.roast(
+                    mask.nick, mask.nick, personality=self.personality
+                )
+                self.model_api.history[mask.nick].append(f"{mask.nick}. {reply}")
                 self.bot.privmsg(channel, f"Hi {mask.nick}! {reply}.")
         else:
             # When we join the channel, public message
@@ -60,23 +63,23 @@ class Plugin:
     def roast(self, mask=None, data=None, **kwargs):
         """Response to a channel message."""
         name = mask.split("!")[0]
-        name_blacklist = ['nickserv', 'freenode', 'chanserv']
+        name_blacklist = ["nickserv", "freenode", "chanserv"]
         for bad_name in name_blacklist:
             if bad_name in name.lower():
-                return ''
-        
+                return ""
+
         is_pm = kwargs["target"] == self.bot.nick
         channel = name if is_pm else kwargs["target"]
-        if '_bot' in name:
+        if "_bot" in name:
             # if it's a bot usually don't reply
-            if random.random()<0.95:
-                return ''
-        
-        if (not is_pm) and random.random()<0.3:
+            if random.random() < 0.95:
+                return ""
+
+        if (not is_pm) and random.random() < 0.05:
             # Chance to ignore messages to prevent escalation on double messaging in public channels etc
-            return ''
-        
-        if data == 'RESET':
+            return ""
+
+        if data == "RESET":
             msg = self.model_api.reset(name)
             self.bot.privmsg(channel, msg)
             return msg
@@ -86,31 +89,23 @@ class Plugin:
         self.bot.privmsg(channel, msg)
         logger.info("out msg: channel=%s, msg=%s", channel, msg)
 
+
 def main():
     parser = ArgumentParser()
+    parser.add_argument("--port", type=int, default=5586, help="zeromq port")
+    parser.add_argument("--name", type=str, default="")
     parser.add_argument(
-            "--port",
-            type=int,
-            default=5586,
-            help="zeromq port",
-        )
-    parser.add_argument(
-            "--name",
-            type=str,
-            default="",
-        )
-    parser.add_argument(
-            "--personality",
-            type=str,
-            default="",
-            help="Choose one of the model conditional personalities, or one will be chosen randomly"
-        )
+        "--personality",
+        type=str,
+        default="",
+        help="Choose one of the model conditional personalities, or one will be chosen randomly",
+    )
     args = parser.parse_args()
 
     logdir = "../runs/irc_log"
     # instanciate a bot
     config = dict(
-        nick=args.name or (args.personality[:11]+'_bot'),
+        nick=args.name or (args.personality[:11] + "_bot"),
         password=secrets["irc"]["password"],
         autojoins=secrets["irc"]["channels"],
         host=secrets["irc"]["server"],
@@ -127,9 +122,8 @@ def main():
     config["irc3.plugins.logger"] = dict(
         handler="irc3.plugins.logger.file_handler",
         filename=os.path.join(logdir, "{host}-{channel}-{date:%Y-%m-%d}.log"),
-        
     )
-    config['model_api'] = dict(port=str(args.port), personality=args.personality)
+    config["model_api"] = dict(port=str(args.port), personality=args.personality)
     bot = irc3.IrcBot.from_config(config)
     bot.run(forever=True)
 
