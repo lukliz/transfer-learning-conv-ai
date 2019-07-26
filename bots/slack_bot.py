@@ -41,10 +41,16 @@ parser.add_argument(
         default="RoastMe",
         help="bot personality",
     )
+parser.add_argument(
+        "--secrets_file",
+        type=str,
+        default=".secrets.json",
+        help="Slack details",
+    )
 args = parser.parse_args()
 
 
-secrets = json.load(open(".secrets.json"))
+secrets = json.load(open(args.secrets_file))
 slack_token = secrets["slack"]["Bot User OAuth Access Token"]
 
 
@@ -72,10 +78,10 @@ def say_hello(**payload):
             thread_ts=thread_ts))
 
 # Initial message wit hwebclient
-client = slack.WebClient(token=slack_token)
-response = client.chat_postMessage(
-    channel='#roastme_robot',
-    text="I'm online! I'm a badly behaved robot. Roast me puny humans; and I will roast you back.")
+# client = slack.WebClient(token=slack_token)
+# response = client.chat_postMessage(
+#     channel='#roastme_robot',
+#     text="I'm online!")
 
 logger.info("Starting RTMClient")
 rtm_client = slack.RTMClient(token=slack_token)

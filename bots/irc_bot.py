@@ -20,10 +20,10 @@ from interact_server import ModelAPI, TOPICS
 import logging
 from helpers import setup_logging
 
-setup_logging("irc_bot", level=logging.DEBUG)
+setup_logging("irc_bot", level=logging.INFO)
 
 logger = logging.getLogger(__file__)
-logging.getLogger("zmqtest").setLevel(logging.DEBUG)
+logging.getLogger("zmqtest").setLevel(logging.INFO)
 secrets = json.load(open(".secrets.json"))
 
 
@@ -95,6 +95,14 @@ def main():
     parser.add_argument("--port", type=int, default=5586, help="zeromq port")
     parser.add_argument("--name", type=str, default="")
     parser.add_argument(
+        "-c",
+        "--channel",
+        type=str,
+        action="append",
+        default=[],
+        help="Limit the subreddits you train on",
+    )
+    parser.add_argument(
         "--personality",
         type=str,
         default="",
@@ -107,7 +115,7 @@ def main():
     config = dict(
         nick=args.name or (args.personality[:11] + "_bot"),
         password=secrets["irc"]["password"],
-        autojoins=secrets["irc"]["channels"],
+        autojoins=args.channel or secrets["irc"]["channels"],
         host=secrets["irc"]["server"],
         port=secrets["irc"]["port"],
         ssl=secrets["irc"]["ssl"],
