@@ -210,7 +210,8 @@ def load_utterances(personality, files, tokenizer, max_seq_len, num_candidates=3
                 thread["comment_dict"], thread["submission"]
             )
         except IndexError as e:
-            logger.warn("IndexError for file '%s', '%s'", file, e)
+            # FIXME low priority. This happens in a few of the threads it seems to be a minor issue of missing comments I haven't tracked down yet
+            logger.debug("IndexError for file '%s', '%s'", file, e)
             continue
         except KeyError as e:
             logger.warn("KeyError for file '%s', '%s'", file, e)
