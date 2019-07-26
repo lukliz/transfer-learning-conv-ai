@@ -18,3 +18,5 @@ psaw
 coloredlogs
 simple_cache
 fuzzywuzzy
+irc3
+slack
