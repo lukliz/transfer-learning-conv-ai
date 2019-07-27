@@ -377,7 +377,6 @@ def train():
         help="Whether training should train only on replies where the original poster is author (in contrast False means only on non OP replies). Default none will do all replies",
     )
 
-    mimic_op
     args = parser.parse_args()
 
     ts = datetime.datetime.utcnow().strftime("%Y%m%d_%H-%M-%S")
