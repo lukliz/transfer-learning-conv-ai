@@ -40,14 +40,7 @@ from pytorch_pretrained_bert import (
     OpenAIGPTTokenizer,
 )
 
-SPECIAL_TOKENS = [
-    "<bos>",
-    "<eos>",
-    "<spartner>",
-    "<sother>",
-    "<sself>",
-    "<pad>",
-]
+SPECIAL_TOKENS = ["<bos>", "<eos>", "<spartner>", "<sother>", "<sself>", "<pad>"]
 MODEL_INPUTS = ["input_ids", "mc_token_ids", "lm_labels", "mc_labels", "token_type_ids"]
 PADDED_INPUTS = ["input_ids", "lm_labels", "token_type_ids"]
 
@@ -129,10 +122,10 @@ def build_input_from_segments(
 
     # Convert authors to tokens
     author2token = {}
-    if len(authors)>0:
-        author2token[authors[-1][0]]=speaker_partner
-    if len(authors)>1:
-        author2token[authors[-2][0]]=speaker_self
+    if len(authors) > 0:
+        author2token[authors[-1][0]] = speaker_partner
+    if len(authors) > 1:
+        author2token[authors[-2][0]] = speaker_self
     author_tokens = [author2token.get(author[0], speaker_other) for author in authors]
 
     # Add author tokens
@@ -170,6 +163,7 @@ def get_data_loaders(args, tokenizer):
         args.dataset_path,
         subreddits=args.subreddit,
         max_seq_len=args.max_seq_len,
+        mimic_op=args.mimic_op,
     )
     if not personachat:
         raise ValueError("No dataset loaded")
@@ -182,7 +176,7 @@ def get_data_loaders(args, tokenizer):
     }
     for dataset_name, dataset in personachat.items():
         num_candidates = len(dataset[0]["utterances"][0]["candidates"])
-        if args.num_candidates > 0: # and dataset_name == "train":
+        if args.num_candidates > 0:  # and dataset_name == "train":
             num_candidates = min(args.num_candidates, num_candidates)
         for dialog in dataset:
             persona = dialog["personality"].copy()
@@ -237,7 +231,7 @@ def get_data_loaders(args, tokenizer):
     )
 
     if args.distributed:
-        train_dataset = train_dataset[:args.max_epoch_length]
+        train_dataset = train_dataset[: args.max_epoch_length]
 
         train_sampler = (
             torch.utils.data.distributed.DistributedSampler(train_dataset)
@@ -250,8 +244,12 @@ def get_data_loaders(args, tokenizer):
             else None
         )
     else:
-        train_sampler = torch.utils.data.RandomSampler(train_dataset, replacement=True, num_samples=args.max_epoch_length)
-        valid_sampler = torch.utils.data.RandomSampler(valid_dataset, replacement=True, num_samples=int(args.max_epoch_length//8))
+        train_sampler = torch.utils.data.RandomSampler(
+            train_dataset, replacement=True, num_samples=args.max_epoch_length
+        )
+        valid_sampler = torch.utils.data.RandomSampler(
+            valid_dataset, replacement=True, num_samples=int(args.max_epoch_length // 8)
+        )
     train_loader = DataLoader(
         train_dataset,
         sampler=train_sampler,
@@ -316,10 +314,7 @@ def train():
         help="Number of previous exchanges to keep in history",
     )
     parser.add_argument(
-        "--max_epoch_length",
-        type=int,
-        default=100000000000,
-        help="Limit epoch length",
+        "--max_epoch_length", type=int, default=100000000000, help="Limit epoch length"
     )
     parser.add_argument(
         "--train_batch_size", type=int, default=1, help="Batch size for training"
@@ -375,22 +370,32 @@ def train():
         default=1024,
         help="Max length size, same or smaller than n_ctx in model",
     )
+    parser.add_argument(
+        "--mimic_op",
+        type=bool,
+        default=None,
+        help="Whether training should train only on replies where the original poster is author (in contrast False means only on non OP replies). Default none will do all replies",
+    )
+
+    mimic_op
     args = parser.parse_args()
 
-    ts = datetime.datetime.utcnow().strftime('%Y%m%d_%H-%M-%S')
-    model_type_name = 'gpt2' if 'gpt2' in args.model_checkpoint else 'gpt'
-    logdir = Path(f'runs/{ts}_{model_type_name}')
+    ts = datetime.datetime.utcnow().strftime("%Y%m%d_%H-%M-%S")
+    model_type_name = "gpt2" if "gpt2" in args.model_checkpoint else "gpt"
+    logdir = Path(f"runs/{ts}_{model_type_name}")
     logdir.mkdir()
 
     logging.basicConfig(
-        level=logging.INFO  if args.local_rank in [-1, 0] else logging.WARN,
+        level=logging.INFO if args.local_rank in [-1, 0] else logging.WARN,
         # format='[{%(filename)s:%(lineno)d} %(levelname)s - %(message)s',
         handlers=[
-            logging.FileHandler(filename=f'{logdir}/train_{args.local_rank}.log'),
-            logging.StreamHandler(sys.stdout)
-        ]
+            logging.FileHandler(filename=f"{logdir}/train_{args.local_rank}.log"),
+            logging.StreamHandler(sys.stdout),
+        ],
     )
-    coloredlogs.install(level=logging.INFO if args.local_rank in [-1, 0] else logging.WARN)
+    coloredlogs.install(
+        level=logging.INFO if args.local_rank in [-1, 0] else logging.WARN
+    )
     logger.warning(
         "Running process %d", args.local_rank
     )  # This is a logger.warning: it will be printed by all distributed processes
@@ -444,8 +449,10 @@ def train():
         batch = tuple(input_tensor.to(args.device) for input_tensor in batch)
         lm_loss, mc_loss = model(*batch)
         loss = (
-            lm_loss * args.lm_coef + mc_loss * args.mc_coef
-        ) / args.gradient_accumulation_steps / args.train_batch_size
+            (lm_loss * args.lm_coef + mc_loss * args.mc_coef)
+            / args.gradient_accumulation_steps
+            / args.train_batch_size
+        )
         if args.fp16:
             with amp.scale_loss(loss, optimizer) as scaled_loss:
                 scaled_loss.backward()
@@ -480,9 +487,9 @@ def train():
 
             # Every now and again sample I guess I should make a custom engine for this
             if log_output:
-                input_text = tokenizer.decode(input_ids[0, -1, :].cpu().tolist()).rstrip(
-                    "<pad>"
-                )
+                input_text = tokenizer.decode(
+                    input_ids[0, -1, :].cpu().tolist()
+                ).rstrip("<pad>")
                 output_text = tokenizer.decode(
                     lm_logits[0, -1, :].argmax(-1).cpu().tolist()
                 ).strip()[:200]
@@ -493,8 +500,8 @@ def train():
                 mc_logits=mc_logits,
                 lm_labels_flat_shifted=lm_labels_flat_shifted,
                 mc_labels=mc_labels,
-                lr=torch.Tensor([optimizer.get_lr()[0]])
-                )
+                lr=torch.Tensor([optimizer.get_lr()[0]]),
+            )
 
     evaluator = Engine(inference)
     exampler = Engine(functools.partial(inference, log_output=True))
@@ -509,7 +516,8 @@ def train():
     # After eval, run a short engine that will log some examplts
     evaluator.add_event_handler(
         # Events.EPOCH_COMPLETED, lambda _: exampler.run([next(iter(val_loader))])
-        Events.EPOCH_COMPLETED, lambda _: exampler.run(itertools.islice(val_loader, 2))
+        Events.EPOCH_COMPLETED,
+        lambda _: exampler.run(itertools.islice(val_loader, 2)),
     )
     if args.n_epochs < 1:
         trainer.add_event_handler(Events.COMPLETED, lambda _: evaluator.run(val_loader))
@@ -539,13 +547,16 @@ def train():
     metrics = {
         "nll": Loss(
             torch.nn.CrossEntropyLoss(ignore_index=-1),
-            output_transform=lambda x: (x['lm_logits_flat_shifted'], x['lm_labels_flat_shifted']),
+            output_transform=lambda x: (
+                x["lm_logits_flat_shifted"],
+                x["lm_labels_flat_shifted"],
+            ),
         ),
         # Display the lr for each epoch, using the metrics api
         "lr": EpochMetric(
-            output_transform=lambda x: (x['lr'], x['lr']),
-            compute_fn=lambda x, y: x[0].mean()
-        )
+            output_transform=lambda x: (x["lr"], x["lr"]),
+            compute_fn=lambda x, y: x[0].mean(),
+        ),
     }
     # Meta metrics
     metrics.update(
@@ -555,7 +566,9 @@ def train():
 
     # Only add accuracy if are using distractors
     if args.num_candidates > 1:
-        metrics["accuracy"] = Accuracy(output_transform=lambda x: (x['mc_logits'], x['mc_labels']))
+        metrics["accuracy"] = Accuracy(
+            output_transform=lambda x: (x["mc_logits"], x["mc_labels"])
+        )
         metrics.update(
             {
                 "average_accuracy": MetricsLambda(
@@ -569,12 +582,10 @@ def train():
     # On the main process: add progress bar, tensorboard, checkpoints and save model, configuration and tokenizer before we start to train
     if args.local_rank in [-1, 0]:
         pbar = ProgressBar(persist=True)
-        pbar.attach(trainer, metric_names=["loss","lr"])
+        pbar.attach(trainer, metric_names=["loss", "lr"])
         evaluator.add_event_handler(
             Events.COMPLETED,
-            lambda _: logger.info(
-                "Validation: %s" % pformat(evaluator.state.metrics)
-            ),
+            lambda _: logger.info("Validation: %s" % pformat(evaluator.state.metrics)),
         )
 
         tb_logger = TensorboardLogger(log_dir=logdir)
@@ -619,8 +630,7 @@ def train():
     # On the main process: close tensorboard logger and rename the last checkpoint (for easy re-loading with OpenAIGPTModel.from_pretrained method)
     if args.local_rank in [-1, 0] and args.n_epochs > 0:
         os.rename(
-            checkpoint_handler._saved[-1][1][-1],
-            logdir / WEIGHTS_NAME,
+            checkpoint_handler._saved[-1][1][-1], logdir / WEIGHTS_NAME
         )  # TODO (huggingface): PR in ignite to have better access to saved file paths (cleaner)
         tb_logger.close()
 
