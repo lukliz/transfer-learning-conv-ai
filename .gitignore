@@ -5,12 +5,12 @@
 /dataset_cache*
 /runs/
 /logs/
-ParlAI/
 __pycache__
-/.secrets
 /.cache
 /notebooks
+/.secrets
 .secrets*
+.env.*
 /docs
 
 # Created by https://www.gitignore.io/api/git,code,linux,python,jupyternotebooks

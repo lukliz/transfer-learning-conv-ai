@@ -4,15 +4,11 @@ python mybot_plugin.py
 python interact_server.py  --max_history 4 --top_p 0.8  --fp16 O2 --model_checkpoint runs/Jul19_14-38-58_ip-172-31-39-133_goood
 """
 import collections
-import json
 import logging
 import os
 import random
-import sys
-import time
 from argparse import ArgumentParser
 import irc3
-import zmq
 from irc3.plugins.command import command
 
 os.sys.path.append("..")
@@ -24,7 +20,6 @@ setup_logging("irc_bot", level=logging.INFO)
 
 logger = logging.getLogger(__file__)
 logging.getLogger("zmqtest").setLevel(logging.INFO)
-secrets = json.load(open(".secrets.json"))
 
 
 @irc3.plugin
@@ -36,6 +31,7 @@ class Plugin:
         self.bot = bot
         self.model_api = ModelAPI(port=bot.config["model_api"]["port"])
         self.personality = bot.config["model_api"]["personality"]
+        self.reply_prob = bot.config["model_api"]["reply_prob"]
         if not self.personality:
             self.personality = random.choice(self.model_api.personalities)
             logger.info(f"Using personality={self.personality}")
@@ -45,7 +41,7 @@ class Plugin:
     def say_hi(self, mask, channel, **kw):
         """Say hi when someone join a channel"""
         if mask.nick != self.bot.nick:
-            if random.random() < 0.85:
+            if random.random() < self.reply_prob:
                 # When a newbie joins the channel
                 reply = self.model_api.roast(
                     mask.nick, mask.nick, personality=self.personality
@@ -69,13 +65,14 @@ class Plugin:
                 return ""
 
         is_pm = kwargs["target"] == self.bot.nick
+        used_my_name = self.personality in data
         channel = name if is_pm else kwargs["target"]
         if "_bot" in name:
             # if it's a bot usually don't reply
             if random.random() < 0.95:
                 return ""
 
-        if (not is_pm) and random.random() < 0.05:
+        if (not is_pm) and (not name) and random.random() < (1-self.reply_prob):
             # Chance to ignore messages to prevent escalation on double messaging in public channels etc
             return ""
 
@@ -92,33 +89,50 @@ class Plugin:
 
 def main():
     parser = ArgumentParser()
-    parser.add_argument("--port", type=int, default=5586, help="zeromq port")
-    parser.add_argument("--name", type=str, default="")
-    parser.add_argument(
-        "-c",
-        "--channel",
-        type=str,
-        action="append",
-        default=[],
-        help="Limit the subreddits you train on",
-    )
+    parser.add_argument("-p", "--port", type=int, default=5586, help="zeromq port")
     parser.add_argument(
         "--personality",
         type=str,
         default="",
         help="Choose one of the model conditional personalities, or one will be chosen randomly",
     )
+    parser.add_argument(
+        "-s",
+        "--irc_server",
+        type=str,
+        default="irc.freenode.net",
+        help="IRC server e.g. irc.freenode.net",
+    )
+    parser.add_argument(
+        "-c",
+        "--irc_channel",
+        type=str,
+        action="append",
+        default=[],
+        help="Which IRC channels to join, can be used multiple times",
+    )
+    parser.add_argument("--irc_port", type=int, default=6667, help="IRC port")
+    parser.add_argument("--irc_ssl", type=bool, default=False, help="IRC port")
+    parser.add_argument(
+        "-n", "--irc_name", type=str, default="", help="IRC nick (optional)"
+    )
+    parser.add_argument(
+        "--irc_password", type=str, default=None, help="IRC password (option)"
+    )
+    parser.add_argument(
+        "--reply_prob", type=float, default=0.9, help="Interaction probability when not called by name or PM'd"
+    )
     args = parser.parse_args()
 
     logdir = "../runs/irc_log"
     # instanciate a bot
     config = dict(
-        nick=args.name or (args.personality[:11] + "_bot"),
-        password=secrets["irc"]["password"],
-        autojoins=args.channel or secrets["irc"]["channels"],
-        host=secrets["irc"]["server"],
-        port=secrets["irc"]["port"],
-        ssl=secrets["irc"]["ssl"],
+        nick=args.irc_name or (args.personality[:11] + "_bot"),
+        password=args.irc_password,
+        autojoins=args.irc_channel,
+        host=args.irc_server,
+        port=args.irc_port,
+        ssl=args.irc_ssl,
         includes=[
             "irc3.plugins.core",
             "irc3.plugins.command",
@@ -131,7 +145,11 @@ def main():
         handler="irc3.plugins.logger.file_handler",
         filename=os.path.join(logdir, "{host}-{channel}-{date:%Y-%m-%d}.log"),
     )
-    config["model_api"] = dict(port=str(args.port), personality=args.personality)
+    config["model_api"] = dict(
+        port=str(args.port),
+        personality=args.personality,
+        reply_prob=args.reply_prob
+        )
     bot = irc3.IrcBot.from_config(config)
     bot.run(forever=True)
 

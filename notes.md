@@ -582,8 +582,15 @@ Try cacching each subreddit
   - training a just roast_me + rare_insults bot
   - `python -m ipdb train.py --dataset_path ./data/reddit_threads --fp16 O2 --gradient_accumulation_steps 32 --train_batch_size 1 --valid_batch_size 1 --n_epochs 10 --num_candidates 2 --max_seq_len 750 --model_checkpoint gpt2-medium -s RoastMe -s rare_insults `
 
-to: transfer scraped data to ec2 
-- `rsync -avc -n ./data/reddit_threads/ ubuntu@wassname.play.ai:/home/ubuntu/transfer-learning-conv-ai/data/reddit_threads`
+to: transfer scraped data to ec2 (archive, human, verbose x2, compress and n is dry run, progress)
+- `rsync -ahvvcP ./data/reddit_threads/ ubuntu@wassname.play.ai:/home/ubuntu/transfer-learning-conv-ai/data/reddit_threads -n`
+
+to transfer model sback
+- `rsync -ahvvcP ubuntu@wassname.play.ai:/home/ubuntu/transfer-learning-conv-ai/runs/ ./runs -n`
+- `rsync -ahvvc ubuntu@wassname.play.ai:/home/ubuntu/transfer-learning-conv-ai/runs/ ./runs --info=progress2 --no-inc-recursive` with a total progress bar
+
+rsync -aHAXxv --numeric-ids --delete --progress -e "ssh -T -c arcfour -o Compression=no -x" ubuntu@wassname.play.ai:/home/ubuntu/transfer-learning-conv-ai/runs/ ./runs
+ 
 
 - got language server working, with no intellicode
 - pylama works when prospector doesn't
@@ -972,18 +979,24 @@ Trained a roaste2 bot, and techsupport bot+compliments.
 
 # Starting multiple bots
 
-python interact_server.py  --max_history 20 --top_p 0.8 --model_checkpoint runs/20190723_02-52-01_gpt2_toastme_techsupport --fp16 O3 --port 5560
-python irc_bot.py --port 5560 --personality toastme
-python irc_bot.py --port 5560 --personality techsupport
-python slack_bot.py --port 5560 --personality toastme --secrets_file .secrets_toastme.json
+```
 
-python interact_server.py  --max_history 20 --top_p 0.8 --model_checkpoint runs/Jul19_14-38-58_ip-172-31-39-133_gpt2-medium_goood --port 5587 --fp16 O3
-python irc_bot.py --port 5587 --personality RoastMe
-python irc_bot.py --port 5587 --personality totallynotrobots
-python irc_bot.py --port 5587 --personality dreams
-python slack_bot.py --port 5560 --personality RoastMe --secrets_file .secrets.json
+# v2:
+python interact_server.py  --max_history 20 --top_p 0.8  --fp16 O3 --model_checkpoint runs/20190723_02-52-01_gpt2_toastme_techsupport --port 5560
+python irc_bot.py --port 5560 --personality toastme -c \#\#techsupport_bot -c \#roastme
+source .env.toastme
+python slack_bot.py --port 5560 --personality toastme --reply_prob 0.4  --token ${BotOAuthToken}
+
+python interact_server.py  --max_history 40 --top_p 0.8  --fp16 O3 --model_checkpoint runs/20190722_11-30-23_gpt2_roastme2 --port 5590
+source .env.roastme
+python slack_bot.py --port 5590 --personality RoastMe --token ${BotOAuthToken}
+python irc_bot.py --port 5590 --personality RoastMe -c \#roastme  --reply_prob 0.4
+
+python interact_server.py  --max_history 20 --top_p 0.8  --fp16 O3 --model_checkpoint runs/20190726_09-19-43_gpt2_CasualConversation --port 5592
+python irc_bot.py --port 5592 --personality CasualConversation  -c \#roastme --reply_prob 0.4
 
 
+```
 
 ```bash
 # On ec2 resume, only roast
@@ -1121,8 +1134,7 @@ $SUBREDDITS
       18719 threads from /r/techsupport
         977 threads from /r/bestof (skipping due to 
        1363 threads from /r/machinelearning (skipping due
-        329 threads from /r/emojipasta (skipping due to 
-        146 threads from /r/singularity_TEST (skipping 
+        329 threads from /r/emojipasta (skipping due to
       19093 threads from /r/RoastMe (skipping due to 
         169 threads from /r/jokes (skipping due to filter)
        1303 threads from /r/copypasta (skipping due to 

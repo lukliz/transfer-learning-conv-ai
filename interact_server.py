@@ -210,7 +210,7 @@ def run():
     parser.add_argument(
         "--max_history",
         type=int,
-        default=4,
+        default=20,
         help="Number of previous utterances to keep in history",
     )
     parser.add_argument(
