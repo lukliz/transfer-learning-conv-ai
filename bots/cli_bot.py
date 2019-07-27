@@ -39,6 +39,5 @@ while True:
         personality = random.choice(model_api.personalities)
         logger.info(
             "Selected personality: /r/%s", personality)
-        )
 
     print(f'{crayons.blue("robot:")}{out_text}')
