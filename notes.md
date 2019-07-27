@@ -988,12 +988,15 @@ source .env.toastme
 python slack_bot.py --port 5560 --personality toastme --reply_prob 0.4  --token ${BotOAuthToken}
 
 python interact_server.py  --max_history 40 --top_p 0.8  --fp16 O3 --model_checkpoint runs/20190722_11-30-23_gpt2_roastme2 --port 5590
+python irc_bot.py --port 5590 --personality RoastMe -c \#roastme  --reply_prob 0.4
 source .env.roastme
 python slack_bot.py --port 5590 --personality RoastMe --token ${BotOAuthToken}
-python irc_bot.py --port 5590 --personality RoastMe -c \#roastme  --reply_prob 0.4
 
 python interact_server.py  --max_history 20 --top_p 0.8  --fp16 O3 --model_checkpoint runs/20190726_09-19-43_gpt2_CasualConversation --port 5592
-python irc_bot.py --port 5592 --personality CasualConversation  -c \#roastme --reply_prob 0.4
+python irc_bot.py --port 5592 --personality CasualConversation  -c \#roastme --reply_prob 0.3
+
+python interact_server.py  --max_history 20 --top_p 0.8  --fp16 O3 --model_checkpoint runs/20190726_15-08-02_gpt2_nostupidquestions --port 5594
+python irc_bot.py --port 5594 --personality nostupidquestions  -c \#roastme --reply_prob 0.3
 
 
 ```
