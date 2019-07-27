@@ -535,9 +535,8 @@ def train():
         )
 
     # Learning rate warms up then linearly decreases
-    tot_iters = args.n_epochs * len(train_loader)
     scheduler = PiecewiseLinear(
-        optimizer, "lr", [(0, 0), (int(tot_iters * 0.3), args.lr), (tot_iters, 0.0)]
+        optimizer, "lr", [(0, 0), (int(t_total * 0.2), args.lr), (t_total, 0.0)]
     )
     trainer.add_event_handler(Events.ITERATION_STARTED, scheduler)
 
