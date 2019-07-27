@@ -269,7 +269,7 @@ def load_utterances(personality, files, tokenizer, max_seq_len, num_candidates=3
                     lambda x: x.get("author", "").lower().endswith("bot"),
                     lambda x: x.get("author", "").lower().startswith("auto"),
                     lambda x: "This is a bot" not in x.get("body", ""),
-                    lambda x: "I am a bot" not in x.get("body", ""),
+                    lambda x: "m a bot" not in x.get("body", ""),
                     # Short comments are low information and too easy
                     lambda x: len(x.get("body", "")) > 30,
                     lambda x: len(x.get("body", ""))
