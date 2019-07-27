@@ -96,14 +96,8 @@ class ModelAPI(object):
             
         reply = msg["data"]
     
-        # To avoid looping 25% change of putting another reply in. 5% chance of forgetting all
-        if random.random()<25:
-            random_replies = ['I love to eat toast', 'I am a kung fu master',
-             'You look like a rugby player', 'Good will to all creatures', 'Hi friend, I love you and love all', 
-             'Fuck you and the horse you rode in on']
-            fake_reply = random.choice(random_replies)
-            self.history[name].append(fake_reply)
-        elif random.random()<5:
+        # To avoid looping 5% chance of forgetting all, 25% change of not remembering what it said
+        if random.random()<5:
             self.history[name] = []   
         elif random.random()<25:
             pass
