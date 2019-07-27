@@ -1,12 +1,12 @@
-This repo uses reddit data from pushshift.io to create a chat bot. It's like the [huggingface/transfer-learning-conv-ai](https://github.com/huggingface/transfer-learning-conv-ai)  repo it was forked from, but the personalities are subreddits, the history are the previous comments, and utterances are from reddit comments. 
+This repo uses reddit data from pushshift.io to create a chat bot for irc and slack. It's like the [huggingface/transfer-learning-conv-ai](https://github.com/huggingface/transfer-learning-conv-ai)  repo it was forked from, but the personalities are subreddits, the history are the previous comments, and utterances are from reddit comments. 
 Inspired by /u/disumbrationist I made a GPT2 bot which you cant chat with [on IRC](https://webchat.freenode.net/?channels=roastme). It will insult you. 
 
 Replies will take a few seconds when I have it on the gpu, other times a minute. People may break it.
 
 I used this code (although it doesn't have the latest commit) https://github.com/wassname/transfer-learning-conv-ai as well as a lot of data cleaning and some custom speaker tokens. I'm happy to answer any technical questions.
 
-Sample conversation:
-
+Sample conversation: 
+  
  
 > <roastme_robot> Hi! I'm a bot using GPT2-medium and trained on /r/RoastMe. Bait me and I will roast you.
 
@@ -53,7 +53,7 @@ Guys, I really think this is the future of call center support ;) My business pl
   - `python interact.py --device cpu --dataset_path ./data/reddit_threads --model_checkpoint runs/<run_name>` for you own run
 
 If you want me to share the dataset and a pretrained model, just ask in the issues. I'm hesitant to do the work to share it if no one wants it.
-
+d
 ## Current results
 
 Are OK (see TODO below for ideas)
@@ -191,32 +191,9 @@ This model can be trained in about one hour on a 8 V100 cloud instance (currentl
 To install and use the training and inference scripts please clone the repo and install the requirements:
 
 ```bash
-git clone https://github.com/huggingface/transfer-learning-conv-ai
+git clone https://github.com/wassname/transfer-learning-conv-ai
 cd transfer-learning-conv-ai
 pip install -r requirements.txt
-```
-
-## Installation with Docker
-
-To install using docker please build the self-contained image:
-
-```bash
-docker build -t convai .
-```
-
-You can then enter the image  
-
-```bash
-ip-192-168-22-157:transfer-learning-conv-ai loretoparisi$ docker run --rm -it convai bash
-root@91e241bb823e:/# ls
-Dockerfile  README.md  boot                  dev  home         lib    media  models  proc              root  sbin  sys  train.py  utils.py
-LICENCE     bin        convai_evaluation.py  etc  interact.py  lib64  mnt    opt     requirements.txt  run   srv   tmp  usr       var
-```
-
-You can then run the `interact.py` script on the pretrained model:
-
-```bash
-python3 interact.py --model models/
 ```
 
 ## Pretrained model

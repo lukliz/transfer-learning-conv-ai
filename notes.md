@@ -37,7 +37,7 @@ I thought about formatting it using special  chars etc, but I decide it would be
 Look like I can't fit it into mem, need to use a cloud gpu!
 `python train.py --dataset_path ./data/reddit_threads --fp16 O3 --gradient_accumulation_steps 8 --train_batch_size 1 --valid_batch_size 1`
 
-works!
+doesn't work!
 - O2 causes nans
 `python train.py --dataset_path ./data/reddit_threads --fp16 O1 --gradient_accumulation_steps 8 --train_batch_size 2 --valid_batch_size 2`
 
@@ -860,7 +860,11 @@ Try with cleaned and larger dataset, large batch, and more epoch
 
 ```bash
 # On ec2 resume, large batch
-nohup python train.py --fp16 O2 --max_seq_len 300 --num_candidates 1 --gradient_accumulation_steps 1 --train_batch_size 10 --valid_batch_size 6 --lr 1e-4 --mc_coef 0 --max_history 8 --n_epochs 40 --max_epoch_length 40000 --dataset_path data/reddit_threads/ -s RoastMe -s totallynotrobots -s singularity --model_checkpoint runs/Jul19_14-38-58_ip-172-31-39-133_gpt2_goood/ &> output.log & 
+# nohup python train.py --fp16 O2 --max_seq_len 300 --num_candidates 1 --gradient_accumulation_steps 1 --train_batch_size 10 --valid_batch_size 6 --lr 1e-4 --mc_coef 0 --max_history 8 --n_epochs 40 --max_epoch_length 40000 --dataset_path data/reddit_threads/ -s RoastMe -s totallynotrobots -s singularity --model_checkpoint runs/Jul19_14-38-58_ip-172-31-39-133_gpt2_goood/ &> output.log & 
+# ended up not doing O2 since it errors, though I might as well fine tune with O0 just in case even though 3x slower
+
+nohup python train.py - --max_seq_len 300 --num_candidates 1 --gradient_accumulation_steps 1 --train_batch_size 5 --valid_batch_size 3 --lr 1e-4 --mc_coef 0 --max_history 8 --n_epochs 40 --max_epoch_length 40000 --dataset_path data/reddit_threads/ -s RoastMe -s totallynotrobots -s singularity --model_checkpoint runs/Jul19_14-38-58_ip-172-31-39-133_gpt2_goood/ &> output2.log &
+
 ```
 
 
@@ -884,7 +888,15 @@ Note I can't load from prev checkpoint? I just get ???. Also I'm trying with O2 
 
 - fp O3 still doesn't work even with fp32 batch norm. O2 seems to and lets my use 2x batch and 2x as fast. 01 is 2x as fast
 
-
+```sh
+# train tech support bot
+nohup python train.py  --max_seq_len 300 --num_candidates 1 --gradient_accumulation_steps 1 --fp16 O1 --train_batch_size 5 --valid_batch_size 3 --lr 1e-4 --mc_coef 0 --max_history 8 --n_epochs 20 --max_epoch_length 10000 --dataset_path data/reddit_threads/ -s techsupport -s toastme --model_checkpoint gpt2-medium &
+# INFO:train.py:Validation: 
+# {'average_nll': 4.05504309091568,
+#  'average_ppl': 57.68764875621417,
+#  'lr': 3.5714284862820023e-09,
+#  'nll': 4.05504309091568}
+```
 
 Trained a roaste2 bot, and techsupport bot+compliments.
 
@@ -959,11 +971,170 @@ Trained a roaste2 bot, and techsupport bot+compliments.
 
 
 # Starting multiple bots
+
 python interact_server.py  --max_history 20 --top_p 0.8 --model_checkpoint runs/20190723_02-52-01_gpt2_toastme_techsupport --fp16 O3 --port 5560
 python irc_bot.py --port 5560 --personality toastme
 python irc_bot.py --port 5560 --personality techsupport
+python slack_bot.py --port 5560 --personality toastme --secrets_file .secrets_toastme.json
 
 python interact_server.py  --max_history 20 --top_p 0.8 --model_checkpoint runs/Jul19_14-38-58_ip-172-31-39-133_gpt2-medium_goood --port 5587 --fp16 O3
 python irc_bot.py --port 5587 --personality RoastMe
 python irc_bot.py --port 5587 --personality totallynotrobots
 python irc_bot.py --port 5587 --personality dreams
+python slack_bot.py --port 5560 --personality RoastMe --secrets_file .secrets.json
+
+
+
+```bash
+# On ec2 resume, only roast
+nohup python train.py --fp16 O1 --max_seq_len 300 --num_candidates 1 --gradient_accumulation_steps 1 --train_batch_size 5 --valid_batch_size 3 --lr 1e-4 --mc_coef 0 --max_history 8 --n_epochs 20 --max_epoch_length 20000 --dataset_path data/reddit_threads/ -s RoastMe --model_checkpoint runs/20190722_11-30-23_gpt2_roastme2/ & 
+# 2019-07-26 07:21:12 ip-172-31-39-133 train.py[31952] INFO Validation: {'average_nll': 3.1533123052716254,
+#  'average_ppl': 23.41348890638628,
+#  'lr': 1.4289285900304094e-05,
+#  'nll': 3.1533123052716254}
+
+```
+
+```bash
+# On ec2 resume, only CasualConversation, quick 02
+MODEL_CHECKPOINT=gpt2-medium
+SUBREDDITS='-s CasualConversation'
+python train.py \
+--fp16 O2 \
+--max_seq_len 300 \
+--num_candidates 1 \
+--gradient_accumulation_steps 1 \
+--train_batch_size 10 \
+--valid_batch_size 6 \
+--lr 1e-4 \
+--mc_coef 0 \
+--max_history 8 \
+--n_epochs 40 \
+--max_epoch_length 20000 \
+--dataset_path data/reddit_threads/ \
+--model_checkpoint $MODEL_CHECKPOINT \
+$SUBREDDITS
+
+
+```sh
+MODEL_CHECKPOINT=gpt2-medium
+SUBREDDITS='-s nostupidquestions'
+python train.py \
+--fp16 O1 \
+--max_seq_len 300 \
+--num_candidates 1 \
+--gradient_accumulation_steps 1 \
+--train_batch_size 5 \
+--valid_batch_size 3 \
+--lr 1e-4 \
+--mc_coef 0 \
+--max_history 8 \
+--n_epochs 10 \
+--max_epoch_length 20000 \
+--dataset_path data/reddit_threads/ \
+--model_checkpoint $MODEL_CHECKPOINT \
+$SUBREDDITS
+
+MODEL_CHECKPOINT=gpt2-medium
+SUBREDDITS='-s philosophy -s machinelearning'
+python train.py \
+--fp16 O1 \
+--max_seq_len 300 \
+--num_candidates 1 \
+--gradient_accumulation_steps 1 \
+--train_batch_size 5 \
+--valid_batch_size 3 \
+--lr 1e-4 \
+--mc_coef 0 \
+--max_history 8 \
+--n_epochs 10 \
+--max_epoch_length 20000 \
+--dataset_path data/reddit_threads/ \
+--model_checkpoint $MODEL_CHECKPOINT \
+$SUBREDDITS
+
+# On ec2 resume, only CasualConversation, quick 02
+MODEL_CHECKPOINT=20190726_09-19-43_gpt2_CasualConversation
+SUBREDDITS='-s CasualConversation'
+python train.py \
+--fp16 O0 \
+--max_seq_len 300 \
+--num_candidates 1 \
+--gradient_accumulation_steps 1 \
+--train_batch_size 5 \
+--valid_batch_size 3 \
+--lr 1e-4 \
+--mc_coef 0 \
+--max_history 8 \
+--n_epochs 10 \
+--max_epoch_length 20000 \
+--dataset_path data/reddit_threads/ \
+--model_checkpoint $MODEL_CHECKPOINT \
+$SUBREDDITS
+
+# ec2, lets fine tune toastme without fp16, it seems to be better
+MODEL_CHECKPOINT=runs/20190723_02-52-01_gpt2_toastme_techsupport
+SUBREDDITS='-s techsupport -s toastme'
+python train.py \
+--max_seq_len 300 \
+--num_candidates 1 \
+--gradient_accumulation_steps 1 \
+--train_batch_size 5 \
+--valid_batch_size 3 \
+--lr 1e-4 \
+--mc_coef 0 \
+--max_history 8 \
+--n_epochs 5 \
+--max_epoch_length 20000 \
+--dataset_path data/reddit_threads/ \
+--model_checkpoint $MODEL_CHECKPOINT \
+$SUBREDDITS 
+
+# fine tune the just roast me
+MODEL_CHECKPOINT=runs/20190722_11-30-23_gpt2_roastme2
+SUBREDDITS='-s RoastMe'
+python train.py \
+--max_seq_len 300 \
+--num_candidates 1 \
+--gradient_accumulation_steps 1 \
+--train_batch_size 5 \
+--valid_batch_size 3 \
+--lr 1e-4 \
+--mc_coef 0 \
+--max_history 8 \
+--n_epochs 5 \
+--max_epoch_length 20000 \
+--dataset_path data/reddit_threads/ \
+--model_checkpoint $MODEL_CHECKPOINT \
+$SUBREDDITS 
+
+
+# TODO fine tune casual conv without fp16 for a few epochs
+```
+
+```
+       1500 threads from /r/truereddit (skipping due to 
+       1477 threads from /r/nosleep (skipping due to 
+       1182 threads from /r/Scotland (skipping due to 
+       1489 threads from /r/programmingcirclejerk 
+        102 threads from /r/aww (skipping due to filter)
+      18719 threads from /r/techsupport
+        977 threads from /r/bestof (skipping due to 
+       1363 threads from /r/machinelearning (skipping due
+        329 threads from /r/emojipasta (skipping due to 
+        146 threads from /r/singularity_TEST (skipping 
+      19093 threads from /r/RoastMe (skipping due to 
+        169 threads from /r/jokes (skipping due to filter)
+       1303 threads from /r/copypasta (skipping due to 
+       4698 threads from /r/nostupidquestions (skipping 
+        996 threads from /r/totallynotrobots (skipping 
+       1822 threads from /r/singularity (skipping due to 
+      26800 threads from /r/CasualConversation (skipping 
+        507 threads from /r/dreams (skipping due to 
+       5776 threads from /r/toastme
+       1134 threads from /r/shittyaskscience (skipping 
+        200 threads from /r/theonion (skipping due to 
+       1951 threads from /r/moviescirclejerk (skipping 
+       3225 threads from /r/philosophy (skipping due to 
+       1454 threads from /r/whowouldwin (skipping due to 
+```

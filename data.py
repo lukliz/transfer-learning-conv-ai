@@ -256,7 +256,7 @@ def load_utterances(personality, files, tokenizer, max_seq_len, num_candidates=3
 
                 # Filter some of the bad data out, yeah it's a hack, but some is very useful
                 filters = [
-                    # Also filter out op? In roast me they do not do roasting
+                    # Also filter out op? Filter in, or neither
                     lambda r: (mimic_op is None) or ((r["author"] == history_things[0]["author"])==mimic_op),
                     # filter out deleted data
                     lambda x: "[deleted]" not in x.get("body", ""),
